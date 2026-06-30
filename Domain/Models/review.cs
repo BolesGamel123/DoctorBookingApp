@@ -53,5 +53,5 @@ public partial class review
 
     [ForeignKey("user_id")]
     [InverseProperty("reviews")]
-    public virtual user user { get; set; }
+    public virtual Patient user { get; set; }
 }

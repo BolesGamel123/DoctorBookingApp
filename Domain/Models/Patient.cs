@@ -11,7 +11,7 @@ namespace Domain.Models;
 [Index("is_active", "is_banned", Name = "IX_users_status")]
 [Index("email", Name = "UQ_users_email", IsUnique = true)]
 [Index("mobile_number", Name = "UQ_users_mobile", IsUnique = true)]
-public partial class user
+public partial class Patient
 {
     [Key]
     public long id { get; set; }
@@ -70,21 +70,21 @@ public partial class user
 
     public DateTime? refresh_token_expiry { get; set; }
 
-    [InverseProperty("user")]
+    [InverseProperty("Patient")]
     public virtual ICollection<booking> bookings { get; set; } = new List<booking>();
 
-    [InverseProperty("user")]
+    [InverseProperty("Patient")]
     public virtual ICollection<chat_conversation> chat_conversations { get; set; } = new List<chat_conversation>();
 
-    [InverseProperty("user")]
+    [InverseProperty("Patient")]
     public virtual ICollection<favorite> favorites { get; set; } = new List<favorite>();
 
-    [InverseProperty("user")]
+    [InverseProperty("Patient")]
     public virtual ICollection<payment> payments { get; set; } = new List<payment>();
 
-    [InverseProperty("user")]
+    [InverseProperty("Patient")]
     public virtual ICollection<review> reviews { get; set; } = new List<review>();
 
-    [InverseProperty("user")]
+    [InverseProperty("Patient")]
     public virtual ICollection<search_history> search_histories { get; set; } = new List<search_history>();
 }

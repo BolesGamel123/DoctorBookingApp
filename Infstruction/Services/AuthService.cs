@@ -27,15 +27,15 @@ public class AuthService : IAuthService
             return AuthResult.Failure("Passwords do not match.");
 
         // Check if email already exists
-        if (await _context.users.AnyAsync(u => u.email == request.Email && u.deleted_at == null))
+        if (await _context.Patient.AnyAsync(u => u.email == request.Email && u.deleted_at == null))
             return AuthResult.Failure("Email is already registered.");
 
         // Check if mobile already exists
-        if (await _context.users.AnyAsync(u => u.mobile_number == request.MobileNumber && u.deleted_at == null))
+        if (await _context.Patient.AnyAsync(u => u.mobile_number == request.MobileNumber && u.deleted_at == null))
             return AuthResult.Failure("Mobile number is already registered.");
 
-        // Create user
-        var newUser = new user
+        // Create Patient
+        var newUser = new Patient
         {
             full_name = request.FullName,
             email = request.Email,
@@ -48,7 +48,7 @@ public class AuthService : IAuthService
             updated_at = DateTime.UtcNow
         };
 
-        _context.users.Add(newUser);
+        _context.Patient.Add(newUser);
         await _context.SaveChangesAsync();
 
         // Generate tokens
@@ -67,7 +67,7 @@ public class AuthService : IAuthService
 
     public async Task<AuthResult> LoginAsync(LoginRequest request)
     {
-        var existingUser = await _context.users
+        var existingUser = await _context.Patient
             .FirstOrDefaultAsync(u => u.email == request.Email && u.deleted_at == null);
 
         if (existingUser == null)
@@ -99,7 +99,7 @@ public class AuthService : IAuthService
 
     public async Task<AuthResult> RefreshTokenAsync(string refreshToken)
     {
-        var existingUser = await _context.users
+        var existingUser = await _context.Patient
             .FirstOrDefaultAsync(u => u.refresh_token == refreshToken && u.deleted_at == null);
 
         if (existingUser == null || existingUser.refresh_token_expiry < DateTime.UtcNow)
@@ -121,7 +121,7 @@ public class AuthService : IAuthService
 
     public async Task<bool> RevokeTokenAsync(long userId)
     {
-        var existingUser = await _context.users.FindAsync(userId);
+        var existingUser = await _context.Patient.FindAsync(userId);
         if (existingUser == null) return false;
 
         existingUser.refresh_token = null;
@@ -133,7 +133,7 @@ public class AuthService : IAuthService
 
     // ── Helper ─────────────────────────────────────────────
 
-    private static UserDto MapToDto(user u) => new()
+    private static UserDto MapToDto(Patient u) => new()
     {
         Id = u.id,
         FullName = u.full_name,

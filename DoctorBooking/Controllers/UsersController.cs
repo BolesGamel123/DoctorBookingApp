@@ -21,13 +21,13 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get current authenticated user's profile.
+    /// Get current authenticated Patient's profile.
     /// </summary>
     [HttpGet("me")]
     public async Task<IActionResult> GetMe()
     {
         var userId = GetCurrentUserId();
-        var existingUser = await _context.users
+        var existingUser = await _context.Patient
             .FirstOrDefaultAsync(u => u.id == userId && u.deleted_at == null);
 
         if (existingUser == null)
@@ -37,13 +37,13 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Update current authenticated user's profile.
+    /// Update current authenticated Patient's profile.
     /// </summary>
     [HttpPut("me")]
     public async Task<IActionResult> UpdateMe([FromBody] UpdateUserRequest request)
     {
         var userId = GetCurrentUserId();
-        var existingUser = await _context.users
+        var existingUser = await _context.Patient
             .FirstOrDefaultAsync(u => u.id == userId && u.deleted_at == null);
 
         if (existingUser == null)
@@ -64,13 +64,13 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get all users (admin only, paginated).
+    /// Get all Patient (admin only, paginated).
     /// </summary>
     [HttpGet]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var query = _context.users.Where(u => u.deleted_at == null);
+        var query = _context.Patient.Where(u => u.deleted_at == null);
 
         var totalCount = await query.CountAsync();
         var users = await query
@@ -85,13 +85,13 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get a user by ID (admin only).
+    /// Get a Patient by ID (admin only).
     /// </summary>
     [HttpGet("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetById(long id)
     {
-        var existingUser = await _context.users
+        var existingUser = await _context.Patient
             .FirstOrDefaultAsync(u => u.id == id && u.deleted_at == null);
 
         if (existingUser == null)
@@ -101,13 +101,13 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Soft-delete a user (admin only).
+    /// Soft-delete a Patient (admin only).
     /// </summary>
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(long id)
     {
-        var existingUser = await _context.users.FindAsync(id);
+        var existingUser = await _context.Patient.FindAsync(id);
         if (existingUser == null || existingUser.deleted_at != null)
             return NotFound(ApiResponse<string>.Fail("User not found."));
 
@@ -129,7 +129,7 @@ public class UsersController : ControllerBase
         return long.Parse(sub!);
     }
 
-    private static UserDto MapToDto(user u) => new()
+    private static UserDto MapToDto(Patient u) => new()
     {
         Id = u.id,
         FullName = u.full_name,

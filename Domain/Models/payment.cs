@@ -76,5 +76,5 @@ public partial class payment
 
     [ForeignKey("user_id")]
     [InverseProperty("payments")]
-    public virtual user user { get; set; }
+    public virtual Patient user { get; set; }
 }

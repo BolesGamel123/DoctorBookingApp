@@ -53,7 +53,7 @@ public partial class AppDBContext : DbContext
 
     public virtual DbSet<system_log> system_logs { get; set; }
 
-    public virtual DbSet<user> users { get; set; }
+    public virtual DbSet<Patient> Patient { get; set; }
 
 //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -321,7 +321,7 @@ public partial class AppDBContext : DbContext
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysutcdatetime())");
         });
 
-        modelBuilder.Entity<user>(entity =>
+        modelBuilder.Entity<Patient>(entity =>
         {
             entity.HasIndex(e => new { e.latitude, e.longitude }, "IX_users_location").HasFilter("([latitude] IS NOT NULL AND [longitude] IS NOT NULL)");
 

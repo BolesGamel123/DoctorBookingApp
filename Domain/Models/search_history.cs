@@ -28,5 +28,5 @@ public partial class search_history
 
     [ForeignKey("user_id")]
     [InverseProperty("search_histories")]
-    public virtual user user { get; set; }
+    public virtual Patient user { get; set; }
 }
