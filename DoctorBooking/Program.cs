@@ -1,6 +1,7 @@
 using System.Text;
 using Application.Interfaces;
 using Domain.Models;
+using DoctorBooking.Swagger;
 using Infrastructure.Services;
 using Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,11 +10,11 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Database ────────────────────────────────────────────────
+// ── Database ─────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ── JWT Settings ────────────────────────────────────────────
+// ── JWT Settings ─────────────────────────────────────────────
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection(JwtSettings.SectionName));
 
@@ -26,38 +27,38 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
+            ValidateIssuer           = true,
+            ValidateAudience         = true,
+            ValidateLifetime         = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings.Issuer,
-            ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+            ValidIssuer              = jwtSettings.Issuer,
+            ValidAudience            = jwtSettings.Audience,
+            IssuerSigningKey         = new SymmetricSecurityKey(
+                                           Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
         };
     });
 
 builder.Services.AddAuthorization();
 
-// ── Services ────────────────────────────────────────────────
+// ── Services ─────────────────────────────────────────────────
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// ── CORS ────────────────────────────────────────────────────
+// ── CORS ──────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
-    options.AddPolicy("AllowAll", p => 
+    options.AddPolicy("AllowAll", p =>
         p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
-// ── Controllers & Swagger ────────────────────────────────────
+// ── Controllers & Swagger (with JWT) ─────────────────────────
 builder.Services.AddControllers();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerWithJwt();   // <-- uses SwaggerConfig extension
 
 var app = builder.Build();
 
-// ── Pipeline ────────────────────────────────────────────────
+// ── Pipeline ─────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerWithUI();             // <-- uses SwaggerConfig extension
 }
 
 app.UseHttpsRedirection();

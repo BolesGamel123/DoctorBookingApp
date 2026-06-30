@@ -18,9 +18,7 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
-    /// <summary>
-    /// Register a new Patient account.
-    /// </summary>
+    /// <summary>Register a new patient account.</summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
@@ -32,9 +30,7 @@ public class AuthController : ControllerBase
         return Ok(ApiResponse<AuthResult>.Ok(result, "Registration successful."));
     }
 
-    /// <summary>
-    /// Login with email and password.
-    /// </summary>
+    /// <summary>Login with email and password.</summary>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
@@ -46,9 +42,7 @@ public class AuthController : ControllerBase
         return Ok(ApiResponse<AuthResult>.Ok(result, "Login successful."));
     }
 
-    /// <summary>
-    /// Refresh access token using a valid refresh token.
-    /// </summary>
+    /// <summary>Refresh access token using a valid refresh token.</summary>
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
     {
@@ -60,18 +54,16 @@ public class AuthController : ControllerBase
         return Ok(ApiResponse<AuthResult>.Ok(result, "Token refreshed."));
     }
 
-    /// <summary>
-    /// Revoke refresh token (logout).
-    /// </summary>
+    /// <summary>Revoke refresh token (logout).</summary>
     [Authorize]
     [HttpPost("revoke")]
     public async Task<IActionResult> Revoke()
     {
-        var userId = long.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+        var userId  = long.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
         var revoked = await _authService.RevokeTokenAsync(userId);
 
         if (!revoked)
-            return NotFound(ApiResponse<string>.Fail("User not found."));
+            return NotFound(ApiResponse<string>.Fail("Patient not found."));
 
         return Ok(ApiResponse<string>.Ok("Refresh token revoked.", "Logged out successfully."));
     }

@@ -22,126 +22,117 @@ public class AuthService : IAuthService
 
     public async Task<AuthResult> RegisterAsync(RegisterRequest request)
     {
-        // Validate passwords match
         if (request.Password != request.ConfirmPassword)
             return AuthResult.Failure("Passwords do not match.");
 
-        // Check if email already exists
-        if (await _context.Patient.AnyAsync(u => u.email == request.Email && u.deleted_at == null))
+        if (await _context.patients.AnyAsync(u => u.email == request.Email && u.deleted_at == null))
             return AuthResult.Failure("Email is already registered.");
 
-        // Check if mobile already exists
-        if (await _context.Patient.AnyAsync(u => u.mobile_number == request.MobileNumber && u.deleted_at == null))
+        if (await _context.patients.AnyAsync(u => u.mobile_number == request.MobileNumber && u.deleted_at == null))
             return AuthResult.Failure("Mobile number is already registered.");
 
-        // Create Patient
-        var newUser = new Patient
+        var newPatient = new patient
         {
-            full_name = request.FullName,
-            email = request.Email,
+            full_name     = request.FullName,
+            email         = request.Email,
             mobile_number = request.MobileNumber,
-            password = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            is_active = true,
-            is_banned = false,
-            remember_me = false,
-            created_at = DateTime.UtcNow,
-            updated_at = DateTime.UtcNow
+            password      = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            is_active     = true,
+            is_banned     = false,
+            remember_me   = false,
+            created_at    = DateTime.UtcNow,
+            updated_at    = DateTime.UtcNow
         };
 
-        _context.Patient.Add(newUser);
+        _context.patients.Add(newPatient);
         await _context.SaveChangesAsync();
 
-        // Generate tokens
-        var roles = new List<string> { "User" };
-        var accessToken = _tokenService.GenerateAccessToken(newUser.id, newUser.email, newUser.full_name, roles);
+        var roles        = new List<string> { "Patient" };
+        var accessToken  = _tokenService.GenerateAccessToken(newPatient.id, newPatient.email, newPatient.full_name, roles);
         var refreshToken = _tokenService.GenerateRefreshToken();
 
-        // Store refresh token
-        newUser.refresh_token = refreshToken;
-        newUser.refresh_token_expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+        newPatient.refresh_token        = refreshToken;
+        newPatient.refresh_token_expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
         await _context.SaveChangesAsync();
 
         var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
-        return AuthResult.Success(accessToken, refreshToken, expiresAt, MapToDto(newUser));
+        return AuthResult.Success(accessToken, refreshToken, expiresAt, MapToDto(newPatient));
     }
 
     public async Task<AuthResult> LoginAsync(LoginRequest request)
     {
-        var existingUser = await _context.Patient
+        var patient = await _context.patients
             .FirstOrDefaultAsync(u => u.email == request.Email && u.deleted_at == null);
 
-        if (existingUser == null)
+        if (patient == null)
             return AuthResult.Failure("Invalid email or password.");
 
-        if (!BCrypt.Net.BCrypt.Verify(request.Password, existingUser.password))
+        if (!BCrypt.Net.BCrypt.Verify(request.Password, patient.password))
             return AuthResult.Failure("Invalid email or password.");
 
-        if (existingUser.is_banned)
-            return AuthResult.Failure("Your account has been suspended.", existingUser.ban_reason ?? "Contact support.");
+        if (patient.is_banned)
+            return AuthResult.Failure("Your account has been suspended.", patient.ban_reason ?? "Contact support.");
 
-        if (!existingUser.is_active)
+        if (!patient.is_active)
             return AuthResult.Failure("Your account is not active.");
 
-        // Generate tokens
-        var roles = new List<string> { "User" };
-        var accessToken = _tokenService.GenerateAccessToken(existingUser.id, existingUser.email, existingUser.full_name, roles);
+        var roles        = new List<string> { "Patient" };
+        var accessToken  = _tokenService.GenerateAccessToken(patient.id, patient.email, patient.full_name, roles);
         var refreshToken = _tokenService.GenerateRefreshToken();
 
-        // Store refresh token
-        existingUser.refresh_token = refreshToken;
-        existingUser.refresh_token_expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
-        existingUser.updated_at = DateTime.UtcNow;
+        patient.refresh_token        = refreshToken;
+        patient.refresh_token_expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+        patient.updated_at           = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
-        return AuthResult.Success(accessToken, refreshToken, expiresAt, MapToDto(existingUser));
+        return AuthResult.Success(accessToken, refreshToken, expiresAt, MapToDto(patient));
     }
 
     public async Task<AuthResult> RefreshTokenAsync(string refreshToken)
     {
-        var existingUser = await _context.Patient
+        var patient = await _context.patients
             .FirstOrDefaultAsync(u => u.refresh_token == refreshToken && u.deleted_at == null);
 
-        if (existingUser == null || existingUser.refresh_token_expiry < DateTime.UtcNow)
+        if (patient == null || patient.refresh_token_expiry < DateTime.UtcNow)
             return AuthResult.Failure("Invalid or expired refresh token.");
 
-        // Rotate tokens
-        var roles = new List<string> { "User" };
-        var newAccessToken = _tokenService.GenerateAccessToken(existingUser.id, existingUser.email, existingUser.full_name, roles);
+        var roles           = new List<string> { "Patient" };
+        var newAccessToken  = _tokenService.GenerateAccessToken(patient.id, patient.email, patient.full_name, roles);
         var newRefreshToken = _tokenService.GenerateRefreshToken();
 
-        existingUser.refresh_token = newRefreshToken;
-        existingUser.refresh_token_expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
-        existingUser.updated_at = DateTime.UtcNow;
+        patient.refresh_token        = newRefreshToken;
+        patient.refresh_token_expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+        patient.updated_at           = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
-        return AuthResult.Success(newAccessToken, newRefreshToken, expiresAt, MapToDto(existingUser));
+        return AuthResult.Success(newAccessToken, newRefreshToken, expiresAt, MapToDto(patient));
     }
 
     public async Task<bool> RevokeTokenAsync(long userId)
     {
-        var existingUser = await _context.Patient.FindAsync(userId);
-        if (existingUser == null) return false;
+        var patient = await _context.patients.FindAsync(userId);
+        if (patient == null) return false;
 
-        existingUser.refresh_token = null;
-        existingUser.refresh_token_expiry = null;
-        existingUser.updated_at = DateTime.UtcNow;
+        patient.refresh_token        = null;
+        patient.refresh_token_expiry = null;
+        patient.updated_at           = DateTime.UtcNow;
         await _context.SaveChangesAsync();
         return true;
     }
 
     // ── Helper ─────────────────────────────────────────────
 
-    private static UserDto MapToDto(Patient u) => new()
+    private static PatientDto MapToDto(patient u) => new()
     {
-        Id = u.id,
-        FullName = u.full_name,
-        Email = u.email,
-        MobileNumber = u.mobile_number,
+        Id             = u.id,
+        FullName       = u.full_name,
+        Email          = u.email,
+        MobileNumber   = u.mobile_number,
         ProfilePhotoUrl = u.profile_photo_url,
-        Birthdate = u.birthdate,
-        IsActive = u.is_active,
-        CreatedAt = u.created_at
+        Birthdate      = u.birthdate,
+        IsActive       = u.is_active,
+        CreatedAt      = u.created_at
     };
 }
