@@ -25,5 +25,3 @@ This branch implements a Clean Architecture for the Doctor Booking App using ASP
 - Noureddine Osama
 - Mohammed Taher
 
----
-This project is maintained on the `Clean-Architecture` branch.
