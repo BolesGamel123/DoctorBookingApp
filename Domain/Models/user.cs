@@ -65,6 +65,11 @@ public partial class user
 
     public DateTime? deleted_at { get; set; }
 
+    [StringLength(255)]
+    public string refresh_token { get; set; }
+
+    public DateTime? refresh_token_expiry { get; set; }
+
     [InverseProperty("user")]
     public virtual ICollection<booking> bookings { get; set; } = new List<booking>();
 
