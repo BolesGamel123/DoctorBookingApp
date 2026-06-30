@@ -28,19 +28,19 @@ public class AuthResult
     public string AccessToken { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
     public DateTime ExpiresAt { get; set; }
-    public UserDto? User { get; set; }
+    public PatientDto? Patient { get; set; }
     public List<string> Errors { get; set; } = [];
 
-    public static AuthResult Success(string accessToken, string refreshToken, DateTime expiresAt, UserDto user)
-        => new() { Succeeded = true, AccessToken = accessToken, RefreshToken = refreshToken, ExpiresAt = expiresAt, User = user };
+    public static AuthResult Success(string accessToken, string refreshToken, DateTime expiresAt, PatientDto patient)
+        => new() { Succeeded = true, AccessToken = accessToken, RefreshToken = refreshToken, ExpiresAt = expiresAt, Patient = patient };
 
     public static AuthResult Failure(params string[] errors)
         => new() { Succeeded = false, Errors = [.. errors] };
 }
 
-// ── User DTOs ──────────────────────────────────────────────
+// ── Patient DTOs ───────────────────────────────────────────
 
-public class UserDto
+public class PatientDto
 {
     public long Id { get; set; }
     public string FullName { get; set; } = string.Empty;
@@ -52,7 +52,7 @@ public class UserDto
     public DateTime CreatedAt { get; set; }
 }
 
-public class UpdateUserRequest
+public class UpdatePatientRequest
 {
     public string? FullName { get; set; }
     public string? MobileNumber { get; set; }
