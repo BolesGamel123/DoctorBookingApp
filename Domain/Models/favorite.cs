@@ -4,12 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace Domain.Models;
+namespace Domain.Entities;
 
-[Index("user_id", Name = "IX_favorites_user")]
-[Index("user_id", "doctor_id", Name = "UQ_favorites_pair", IsUnique = true)]
 public partial class favorite
 {
     [Key]

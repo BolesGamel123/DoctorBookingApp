@@ -1,368 +1,663 @@
 # 🏥 Doctor Booking App
 
-<div align="center">
-
-![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?style=for-the-badge&logo=dotnet)
-![EF Core](https://img.shields.io/badge/EF_Core-10.0-purple?style=for-the-badge&logo=microsoft)
-![SQL Server](https://img.shields.io/badge/SQL_Server-2022-CC2927?style=for-the-badge&logo=microsoftsqlserver)
-![JWT](https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens)
-![Swagger](https://img.shields.io/badge/Swagger-UI-85EA2D?style=for-the-badge&logo=swagger)
-
-
-**A production-ready REST API for a complete Doctor Booking & Appointment Management Platform.**  
-Built with Clean Architecture, ASP.NET Core (.NET 10), EF Core, and JWT Bearer authentication.
-
-[📖 API Docs (Swagger)](#️-getting-started) • [🔐 Auth Flow](#-authentication-jwt) • [📦 Endpoints](#-api-endpoints) • [🚀 Quick Start](#️-getting-started)
-
-</div>
+A production-ready medical appointment booking platform built with **.NET 10** using **Clean Architecture**, **Vertical Slice Architecture**, **CQRS**, and **Domain-Driven Design**.
 
 ---
 
-## 📌 Overview
+## 📐 Architecture Overview
 
-**Doctor Booking App** is a fully-featured healthcare appointment platform API that enables:
+This project follows a strict **4-layer Clean Architecture** with an inward dependency rule — outer layers depend on inner layers, never the reverse.
 
-- 🧑‍⚕️ **Patients** to register, login, book appointments with doctors, chat, pay, and review
-- 👨‍⚕️ **Doctors** to manage availability slots, respond to reviews, and handle bookings
-- 🛡️ **Admins** to manage the entire platform — users, doctors, clinics, announcements, FAQs, and system logs
-- 🔐 Secure **JWT-based authentication** with access token + refresh token rotation
-- 📄 Full **Swagger UI** with Bearer token support for easy API exploration
+```
+┌─────────────────────────────────────────────────┐
+│                  API Layer                      │  ← Entry point (Controllers, Middleware)
+│              (DoctorBooking)                    │
+├─────────────────────────────────────────────────┤
+│            Infrastructure Layer                 │  ← External concerns (DB, JWT, BCrypt)
+│             (Infrastructure)                    │
+├─────────────────────────────────────────────────┤
+│            Application Layer                    │  ← Business logic (CQRS Handlers, Validators)
+│              (Application)                      │
+├─────────────────────────────────────────────────┤
+│              Domain Layer                       │  ← Pure entities (zero dependencies)
+│               (Domain)                          │
+└─────────────────────────────────────────────────┘
+```
 
----
+### Dependency Flow (Strict)
 
-## 🚀 Tech Stack
+```
+Domain ← Application ← Infrastructure ← API
+```
 
-| Layer | Technology | Version |
-|---|---|---|
-| Framework | ASP.NET Core Web API | .NET 10 |
-| ORM | Entity Framework Core | 10.0.9 |
-| Database | SQL Server | 2022 / LocalDB |
-| Authentication | JWT Bearer Tokens | System.IdentityModel.Tokens.Jwt 8.x |
-| Password Hashing | BCrypt.Net-Next | 4.0.3 |
-| API Docs | Swashbuckle / Swagger UI | 6.9.0 |
-| Architecture | Clean Architecture | Domain / Application / Infrastructure / API |
+- **Domain** references **nothing** — pure C# POCOs
+- **Application** references only **Domain**
+- **Infrastructure** references **Application** (to implement its interfaces)
+- **API** references **Application** + **Infrastructure** (for DI wiring)
 
 ---
 
 ## 🗂️ Project Structure
 
 ```
-DoctorBookingApp/
+DoctorBookingApp.slnx
 │
-├── Domain/                              # 🏛️ Core — entities, no external dependencies
+├── Domain/                                    # Layer 0: Domain Entities
+│   ├── Domain.csproj                          # ZERO NuGet packages
 │   └── Models/
-│       ├── patient.cs                   # Patient accounts → maps to [users] table
-│       ├── admin.cs                     # Admin accounts
-│       ├── doctor.cs                    # Doctor profiles
-│       ├── clinic.cs                    # Clinic information
-│       ├── specialty.cs                 # Medical specialties
-│       ├── booking.cs                   # Appointments
-│       ├── doctor_availability_slot.cs  # Doctor time slots
-│       ├── payment.cs                   # Booking payments
-│       ├── review.cs                    # Patient reviews
-│       ├── review_response.cs           # Doctor review replies
-│       ├── chat_conversation.cs         # Chat sessions
-│       ├── chat_message.cs              # Chat messages
-│       ├── notification.cs              # In-app notifications
-│       ├── notification_preference.cs   # Per-user notification settings
-│       ├── favorite.cs                  # Saved/favourite doctors
-│       ├── search_history.cs            # Patient search history
-│       ├── announcement.cs              # Platform announcements
-│       ├── faq.cs                       # FAQ entries
-│       └── system_log.cs               # Admin system event logs
+│       ├── patient.cs                         # Pure POCO — no EF Core attributes
+│       ├── doctor.cs
+│       ├── admin.cs
+│       ├── booking.cs
+│       ├── clinic.cs
+│       ├── specialty.cs
+│       ├── review.cs
+│       ├── review_response.cs
+│       ├── announcement.cs
+│       ├── chat_conversation.cs
+│       ├── chat_message.cs
+│       ├── doctor_availability_slot.cs
+│       ├── faq.cs
+│       ├── favorite.cs
+│       ├── notification.cs
+│       ├── notification_preference.cs
+│       ├── payment.cs
+│       ├── search_history.cs
+│       └── system_log.cs
 │
-├── Application/                         # 📋 Use-case layer — DTOs & interfaces only
-│   ├── DTOs/
-│   │   └── Dtos.cs                      # RegisterRequest, LoginRequest, AuthResult,
-│   │                                    #   PatientDto, UpdatePatientRequest, ApiResponse<T>
-│   └── Interfaces/
-│       ├── IAuthService.cs              # Register / Login / Refresh / Revoke
-│       └── ITokenService.cs             # GenerateAccessToken / GenerateRefreshToken
+├── Application/                               # Layer 1: Business Logic
+│   ├── Application.csproj                     # MediatR, FluentValidation, AutoMapper
+│   ├── DependencyInjection.cs                 # AddApplication() extension
+│   │
+│   ├── Common/
+│   │   ├── Interfaces/
+│   │   │   ├── IApplicationDbContext.cs        # DB abstraction (DbSet<T> only)
+│   │   │   ├── ITokenService.cs                # JWT generation contract
+│   │   │   ├── IPasswordHasher.cs              # Hash/Verify contract
+│   │   │   └── ICurrentUserService.cs          # Authenticated user claims
+│   │   │
+│   │   ├── Models/
+│   │   │   ├── ApiResponse.cs                  # Standard API envelope
+│   │   │   └── PagedResult.cs                  # Pagination wrapper
+│   │   │
+│   │   ├── Exceptions/
+│   │   │   ├── ValidationException.cs          # Thrown by pipeline
+│   │   │   └── NotFoundException.cs            # Thrown by handlers
+│   │   │
+│   │   ├── Behaviors/
+│   │   │   └── ValidationBehavior.cs           # MediatR pipeline behavior
+│   │   │
+│   │   └── Mappings/
+│   │       └── MappingProfile.cs               # AutoMapper entity → DTO maps
+│   │
+│   └── Features/
+│       ├── Auth/                               # Authentication vertical slice
+│       │   ├── DTOs/AuthResponse.cs
+│       │   └── Commands/
+│       │       ├── Register/                   # Command + Validator + Handler
+│       │       ├── Login/                      # Command + Validator + Handler
+│       │       ├── RefreshToken/               # Command + Handler
+│       │       └── RevokeToken/                # Command + Handler
+│       │
+│       ├── Patients/                           # Patient management slice
+│       │   ├── DTOs/PatientResponse.cs
+│       │   ├── Queries/
+│       │   │   ├── GetCurrentPatient/
+│       │   │   ├── GetPatientById/
+│       │   │   └── GetAllPatients/             # With pagination
+│       │   └── Commands/
+│       │       ├── UpdatePatient/              # Command + Validator + Handler
+│       │       └── DeletePatient/              # Soft delete
+│       │
+│       └── Admins/                             # Admin management slice
+│           ├── DTOs/AdminResponse.cs
+│           ├── Queries/
+│           │   ├── GetAllAdmins/
+│           │   └── GetAdminById/
+│           └── Commands/
+│               ├── CreateAdmin/                # Command + Validator + Handler
+│               ├── UpdateAdmin/                # Command + Validator + Handler
+│               └── DeleteAdmin/                # Hard delete
 │
-├── Infstruction/                        # ⚙️ Infrastructure — EF Core, services, config
+├── Infrastructure/                            # Layer 2: External Concerns
+│   ├── Infrastructure.csproj                  # EF Core, BCrypt, JWT Bearer
+│   ├── DependencyInjection.cs                 # AddInfrastructure() extension
 │   ├── Persistence/
-│   │   └── AppDBContext.cs              # EF Core DbContext with all 19 DbSets
-│   ├── Services/
-│   │   ├── AuthService.cs               # Full auth business logic (BCrypt, token handling)
-│   │   └── TokenService.cs             # JWT token generation (HMAC-SHA256)
-│   └── Settings/
-│       └── JwtSettings.cs              # Config POCO for JwtSettings section
+│   │   ├── AppDbContext.cs                    # Implements IApplicationDbContext
+│   │   └── Migrations/                        # EF Core migrations
+│   └── Services/
+│       ├── TokenService.cs                    # JWT generation (implements ITokenService)
+│       ├── PasswordHasher.cs                  # BCrypt (implements IPasswordHasher)
+│       └── CurrentUserService.cs              # Claims extraction (implements ICurrentUserService)
 │
-└── DoctorBooking/                       # 🌐 API layer — controllers, middleware, startup
-    ├── Controllers/
-    │   ├── AuthController.cs            # POST /api/auth/register|login|refresh|revoke
-    │   ├── PatientsController.cs        # GET|PUT /api/patients/me, Admin CRUD
-    │   └── adminsController.cs          # Admin management endpoints
-    ├── Program.cs                       # DI, JWT middleware, Swagger, CORS, pipeline
-    └── appsettings.json                 # Connection string, JWT settings, logging
+├── DoctorBooking/                             # Layer 3: API Entry Point
+│   ├── DoctorBooking.csproj                   # Swagger, OpenAPI
+│   ├── Program.cs                             # Slim — just DI + middleware pipeline
+│   ├── Middleware/
+│   │   └── GlobalExceptionHandlerMiddleware.cs
+│   ├── Controllers/
+│   │   ├── AuthController.cs                  # Thin — ISender only
+│   │   ├── PatientsController.cs              # Thin — ISender only
+│   │   └── AdminsController.cs                # Thin — ISender only
+│   └── appsettings.json
+│
+└── Tests/                                     # Unit Test Project
+    ├── Tests.csproj                           # xUnit, Moq, FluentAssertions
+    ├── Common/
+    │   ├── TestBase.cs                        # In-memory DB + mocked services
+    │   ├── ValidationBehaviorTests.cs
+    │   └── AutoMapperProfileTests.cs
+    └── Features/
+        ├── Auth/
+        │   ├── RegisterCommandTests.cs
+        │   ├── LoginCommandTests.cs
+        │   ├── TokenCommandTests.cs
+        │   └── AuthValidatorTests.cs
+        ├── Patients/
+        │   └── PatientHandlerTests.cs
+        └── Admins/
+            └── AdminHandlerTests.cs
 ```
 
 ---
 
-## 🧩 Domain Models
+## 🧩 Core Design Patterns
 
-| Model | Table | Description |
-|---|---|---|
-| `patient` | `users` | Patient accounts with auth fields (email, password, refresh token) |
-| `admin` | `admins` | Platform administrators with role-based access |
-| `doctor` | `doctors` | Doctor profiles — specialty, clinic, fees, rating |
-| `clinic` | `clinics` | Clinic details (name, address, country) |
-| `specialty` | `specialties` | Medical specialties linked to doctors |
-| `booking` | `bookings` | Appointments between a patient and doctor |
-| `doctor_availability_slot` | `doctor_availability_slots` | Time slot scheduling per doctor |
-| `payment` | `payments` | Payment records (status, gateway txn ID, currency) |
-| `review` | `reviews` | Patient → Doctor star ratings and comments |
-| `review_response` | `review_responses` | Doctor replies to reviews |
-| `chat_conversation` | `chat_conversations` | 1-on-1 chat session (patient ↔ doctor) |
-| `chat_message` | `chat_messages` | Messages with reply-to threading |
-| `notification` | `notifications` | In-app push/email notifications |
-| `notification_preference` | `notification_preferences` | Per-patient notification toggles |
-| `favorite` | `favorites` | Patient's bookmarked doctors |
-| `search_history` | `search_histories` | Recent search terms by patient |
-| `announcement` | `announcements` | Admin-authored platform announcements |
-| `faq` | `faqs` | FAQ entries (created / updated by admins) |
-| `system_log` | `system_logs` | Audit trail for admin events |
+### 1. CQRS (Command Query Responsibility Segregation)
+
+Every operation is either a **Command** (writes data) or a **Query** (reads data). They are separate classes dispatched via **MediatR**.
+
+```csharp
+// Query — read-only, no side effects
+public sealed record GetPatientByIdQuery(long Id)
+    : IRequest<ApiResponse<PatientResponse>>;
+
+// Command — writes data, has side effects
+public sealed record RegisterCommand(
+    string FullName, string Email, string MobileNumber,
+    string Password, string ConfirmPassword
+) : IRequest<ApiResponse<AuthResponse>>;
+```
+
+### 2. Vertical Slice Architecture
+
+Each feature is a self-contained folder with its own Command/Query, Validator, Handler, and DTOs. No shared "services" layer — each slice owns its entire stack.
+
+```
+Features/Auth/Commands/Register/
+├── RegisterCommand.cs           ← The request (input DTO)
+├── RegisterCommandValidator.cs  ← FluentValidation rules
+└── RegisterCommandHandler.cs    ← Business logic
+```
+
+### 3. MediatR Pipeline
+
+Every request flows through this pipeline before reaching its handler:
+
+```
+Controller → ISender.Send(command)
+    │
+    ▼
+┌───────────────────────────┐
+│   ValidationBehavior<T>   │  ← Runs FluentValidation validators
+│   (Pipeline Behavior)     │  ← Throws ValidationException if invalid
+└───────────┬───────────────┘
+            │ (only if validation passes)
+            ▼
+┌───────────────────────────┐
+│   CommandHandler<T>       │  ← Actual business logic
+│   (Feature Handler)       │
+└───────────────────────────┘
+```
+
+### 4. AutoMapper
+
+All entity-to-DTO conversions are centralized in `MappingProfile.cs`:
+
+```csharp
+CreateMap<patient, PatientResponse>()
+    .ForMember(d => d.Id, opt => opt.MapFrom(s => s.id))
+    .ForMember(d => d.FullName, opt => opt.MapFrom(s => s.full_name));
+```
+
+Handlers inject `IMapper` and call `_mapper.Map<PatientResponse>(entity)`.
+
+### 5. Standardized API Response
+
+Every endpoint returns the same envelope format:
+
+```json
+{
+    "success": true,
+    "message": "Login successful.",
+    "data": {
+        "accessToken": "eyJhbG...",
+        "refreshToken": "abc123...",
+        "expiresAt": "2026-06-30T19:00:00Z",
+        "patient": { "id": 1, "fullName": "John Doe", ... }
+    },
+    "errors": null
+}
+```
+
+On failure:
+
+```json
+{
+    "success": false,
+    "message": "Validation failed.",
+    "data": null,
+    "errors": [
+        "Email is required.",
+        "Password must be at least 8 characters."
+    ]
+}
+```
 
 ---
 
-## 🔐 Authentication (JWT)
+## 🛡️ Security
 
-The system uses a **dual-token strategy**:
-- **Access Token** — short-lived JWT (default: 60 minutes), signed with HMAC-SHA256
-- **Refresh Token** — long-lived cryptographic random string (default: 7 days), stored in DB
+### JWT Authentication
 
-### Token Claims
+- **Access Token** — Short-lived (60 min), sent via `Authorization: Bearer <token>`
+- **Refresh Token** — Long-lived (7 days), stored in DB, used to rotate access tokens
+- **Revocation** — `POST /api/auth/revoke` clears the refresh token (logout)
 
-```
-sub    → Patient ID (long)
-email  → Patient email
-name   → Full name
-jti    → Unique token ID (prevents replay)
-iat    → Issued-at timestamp
-roles  → ["Patient"]
-```
+### Password Security
 
-### Auth Endpoints
+- Passwords hashed with **BCrypt** (cost factor 10)
+- Hash operation isolated in `Infrastructure/Services/PasswordHasher.cs`
+- Application layer never sees raw hashing — only the `IPasswordHasher` interface
 
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `POST` | `/api/auth/register` | ❌ Public | Create a new patient account |
-| `POST` | `/api/auth/login` | ❌ Public | Login with email + password |
-| `POST` | `/api/auth/refresh` | ❌ Public | Exchange refresh token for new token pair |
-| `POST` | `/api/auth/revoke` | 🔒 Bearer | Logout — clears refresh token |
+### Configuration (`appsettings.json`)
 
-### Register Request
 ```json
 {
-  "fullName": "John Doe",
-  "email": "john@example.com",
-  "mobileNumber": "01012345678",
-  "password": "Secret@123",
-  "confirmPassword": "Secret@123"
-}
-```
-
-### Login Request
-```json
-{
-  "email": "john@example.com",
-  "password": "Secret@123"
-}
-```
-
-### Auth Response (register & login)
-```json
-{
-  "success": true,
-  "message": "Login successful.",
-  "data": {
-    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refreshToken": "v8Kx3mN2pQ7rT1wY...",
-    "expiresAt": "2026-07-01T20:00:00Z",
-    "patient": {
-      "id": 1,
-      "fullName": "John Doe",
-      "email": "john@example.com",
-      "mobileNumber": "01012345678",
-      "profilePhotoUrl": null,
-      "birthdate": null,
-      "isActive": true,
-      "createdAt": "2026-06-30T17:00:00Z"
+    "ConnectionStrings": {
+        "DefaultConnection": "Server=...;Database=CureDB;..."
+    },
+    "JwtSettings": {
+        "SecretKey": "YourSuperSecretKeyThatIsAtLeast32CharactersLong!",
+        "Issuer": "DoctorBookingApp",
+        "Audience": "DoctorBookingApp",
+        "AccessTokenExpirationMinutes": 60,
+        "RefreshTokenExpirationDays": 7
     }
-  }
-}
-```
-
-### Error Response
-```json
-{
-  "success": false,
-  "message": "Login failed.",
-  "errors": ["Invalid email or password."]
 }
 ```
 
 ---
 
-## 📦 API Endpoints
+## 📡 API Endpoints
 
-### 👤 Patients (`/api/patients`)
+### Auth
 
 | Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/api/patients/me` | 🔒 Patient | Get own profile |
-| `PUT` | `/api/patients/me` | 🔒 Patient | Update own profile |
-| `GET` | `/api/patients?page=1&pageSize=20` | 🔒 Admin | Paginated list of all patients |
-| `GET` | `/api/patients/{id}` | 🔒 Admin | Get specific patient by ID |
-| `DELETE` | `/api/patients/{id}` | 🔒 Admin | Soft-delete patient (sets `deleted_at`) |
+|--------|----------|------|-------------|
+| POST | `/api/auth/register` | ❌ | Register new patient |
+| POST | `/api/auth/login` | ❌ | Login with email/password |
+| POST | `/api/auth/refresh` | ❌ | Refresh access token |
+| POST | `/api/auth/revoke` | ✅ | Revoke refresh token (logout) |
 
-### Update Profile Request
-```json
+### Patients
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/patients/me` | ✅ | Get current patient profile |
+| PUT | `/api/patients/me` | ✅ | Update current patient profile |
+| GET | `/api/patients` | ✅ Admin | Get all patients (paginated) |
+| GET | `/api/patients/{id}` | ✅ Admin | Get patient by ID |
+| DELETE | `/api/patients/{id}` | ✅ Admin | Soft-delete patient |
+
+### Admins
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/api/admins` | ❌ | Get all admins |
+| GET | `/api/admins/{id}` | ❌ | Get admin by ID |
+| POST | `/api/admins` | ❌ | Create new admin |
+| PUT | `/api/admins/{id}` | ❌ | Update admin |
+| DELETE | `/api/admins/{id}` | ❌ | Delete admin |
+
+---
+
+## 🗃️ Database
+
+### Entity Relationship Diagram
+
+```mermaid
+erDiagram
+    patient ||--o{ booking : "books"
+    patient ||--o{ review : "writes"
+    patient ||--o{ favorite : "favorites"
+    patient ||--o{ payment : "pays"
+    patient ||--o{ chat_conversation : "chats"
+    patient ||--o{ search_history : "searches"
+
+    doctor ||--o{ booking : "receives"
+    doctor ||--o{ review : "receives"
+    doctor ||--o{ doctor_availability_slot : "has"
+    doctor ||--o{ chat_conversation : "chats"
+    doctor ||--o{ review_response : "responds"
+    doctor }o--|| specialty : "belongs to"
+    doctor }o--o| clinic : "works at"
+
+    admin ||--o{ doctor : "creates"
+    admin ||--o{ announcement : "publishes"
+    admin ||--o{ clinic : "creates"
+    admin ||--o{ faq : "manages"
+
+    booking ||--o| payment : "has"
+    booking ||--o| review : "has"
+    booking }o--|| doctor_availability_slot : "reserves"
+
+    review ||--o| review_response : "has"
+    chat_conversation ||--o{ chat_message : "contains"
+```
+
+### Schema Configuration
+
+All database constraints are defined via **Fluent API** in `AppDbContext.OnModelCreating()`:
+
+- **Unique indexes**: `UQ_users_email`, `UQ_doctors_email`, `UQ_doctors_license`, etc.
+- **Composite indexes**: `IX_bookings_doctor` (doctor_id + status), `IX_cc_user_inbox` (user_id + last_message_at DESC)
+- **Foreign key constraints**: Named FK constraints with explicit delete behaviors
+- **Default values**: Timestamps via `sysutcdatetime()`, booleans, enums
+
+> **Design Decision**: All `[Index]` attributes were removed from Domain entities and moved to Fluent API to keep the Domain layer free of EF Core dependencies.
+
+---
+
+## ✅ Validation
+
+Validation is handled by **FluentValidation** and runs **automatically** via the MediatR pipeline — no manual calls needed.
+
+### Example Validator
+
+```csharp
+public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand>
 {
-  "fullName": "John Updated",
-  "mobileNumber": "01099999999",
-  "birthdate": "1995-05-15",
-  "profilePhotoUrl": "https://cdn.example.com/photo.jpg",
-  "locationLabel": "Cairo, Egypt",
-  "latitude": 30.0444,
-  "longitude": 31.2357
+    public RegisterCommandValidator()
+    {
+        RuleFor(x => x.FullName).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(254);
+        RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
+        RuleFor(x => x.ConfirmPassword)
+            .Equal(x => x.Password).WithMessage("Passwords do not match.");
+    }
 }
+```
+
+### How It Works
+
+1. Controller calls `_mediator.Send(command)`
+2. `ValidationBehavior<T>` discovers all `IValidator<T>` implementations
+3. Runs all validators against the request
+4. If any fail → throws `ValidationException` with error list
+5. `GlobalExceptionHandlerMiddleware` catches it → returns 400 with errors
+6. If all pass → request reaches the handler
+
+---
+
+## 🧪 Testing
+
+### Test Infrastructure
+
+- **xUnit** — Test framework
+- **Moq** — Mock `ITokenService`, `IPasswordHasher`
+- **FluentAssertions** — Expressive assertions
+- **EF Core InMemory** — Fresh database per test (isolation)
+- **AutoMapper** — Real mapper instance in tests (not mocked)
+
+### Test Coverage (57 Tests)
+
+| Suite | Tests | What's Tested |
+|-------|-------|---------------|
+| RegisterCommandTests | 5 | Happy path, duplicate email/mobile, password hashing, refresh token |
+| LoginCommandTests | 6 | Valid login, wrong password, nonexistent email, banned, inactive, soft-deleted |
+| TokenCommandTests | 5 | Refresh valid/expired/invalid tokens, revoke valid/nonexistent |
+| AuthValidatorTests | 8 | All validation rules for Register + Login |
+| PatientHandlerTests | 10 | CRUD operations, pagination, soft-delete, field isolation |
+| AdminHandlerTests | 8 | CRUD operations, password hashing, AutoMapper integration |
+| ValidationBehaviorTests | 4 | Pipeline pass-through, exception throwing, error deduplication |
+| AutoMapperProfileTests | 5 | Config validation, all mappings, null handling |
+
+### Running Tests
+
+```bash
+# Run all tests
+dotnet test
+
+# Run with detailed output
+dotnet test --logger "console;verbosity=detailed"
+
+# Run a specific test class
+dotnet test --filter "FullyQualifiedName~RegisterCommandTests"
 ```
 
 ---
 
-## ⚙️ Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- SQL Server 2019+ or SQL Server LocalDB
-- Visual Studio 2022 v17.10+ **or** VS Code with C# Dev Kit
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- SQL Server (LocalDB or full instance)
+- EF Core CLI tools (`dotnet tool install --global dotnet-ef`)
 
-### 1. Clone the Repository
+### Setup
 
 ```bash
-git clone https://github.com/BolesGamel123/DoctorBookingApp.git
-cd DoctorBookingApp
+# 1. Clone the repository
+git clone <repository-url>
+cd "Doctor Booking App"
+
+# 2. Restore packages
+dotnet restore
+
+# 3. Apply database migrations
+dotnet ef database update \
+    --project Infrastructure/Infrastructure.csproj \
+    --startup-project DoctorBooking/DoctorBooking.csproj
+
+# 4. Run the application
+dotnet run --project DoctorBooking/DoctorBooking.csproj
+
+# 5. Open Swagger UI
+# Navigate to: https://localhost:<port>/swagger
 ```
 
-### 2. Configure the Database
+### Running Tests
 
-Edit `DoctorBooking/appsettings.json`:
+```bash
+dotnet test
+```
 
-```json
+---
+
+## 📦 NuGet Packages
+
+### Application Layer
+
+| Package | Purpose |
+|---------|---------|
+| MediatR 12.5.0 | CQRS / Command-Query dispatching |
+| FluentValidation 12.0.0 | Input validation pipeline |
+| AutoMapper 14.0.0 | Entity → DTO mapping |
+| EF Core 10.0.9 | `DbSet<T>` abstraction only |
+
+### Infrastructure Layer
+
+| Package | Purpose |
+|---------|---------|
+| EF Core SqlServer 10.0.9 | SQL Server provider |
+| EF Core Design 10.0.9 | Migration generation |
+| BCrypt.Net-Next 4.0.3 | Password hashing |
+| JWT Bearer 10.0.9 | JWT authentication |
+| System.IdentityModel.Tokens.Jwt 8.12.0 | Token generation |
+
+### API Layer
+
+| Package | Purpose |
+|---------|---------|
+| Swashbuckle.AspNetCore 6.9.0 | Swagger UI |
+| EF Core Design 10.0.9 | Migration CLI support |
+
+### Test Layer
+
+| Package | Purpose |
+|---------|---------|
+| xUnit 3.x | Test framework |
+| Moq 4.20.72 | Mocking |
+| FluentAssertions 8.3.0 | Assertion library |
+| EF Core InMemory 10.0.9 | In-memory test database |
+
+---
+
+## 🔧 How to Add a New Feature
+
+Adding a new feature (e.g., "Bookings") requires **zero DI registration** — everything is auto-discovered.
+
+### Step 1: Create the DTO
+
+```csharp
+// Application/Features/Bookings/DTOs/BookingResponse.cs
+namespace Application.Features.Bookings.DTOs;
+
+public sealed class BookingResponse
 {
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=CureDB;Trusted_Connection=True;TrustServerCertificate=True;"
-  },
-  "JwtSettings": {
-    "SecretKey": "YourSuperSecretKeyThatIsAtLeast32CharactersLong2026!",
-    "Issuer": "DoctorBookingApp",
-    "Audience": "DoctorBookingApp",
-    "AccessTokenExpirationMinutes": 60,
-    "RefreshTokenExpirationDays": 7
-  }
+    public long Id { get; init; }
+    public DateTime BookedDate { get; init; }
+    public string Status { get; init; } = string.Empty;
+    // ...
 }
 ```
 
-> ⚠️ **Security**: Replace `SecretKey` with a strong, unique key of at least 32 characters before deploying to production. Never commit real secrets to source control.
+### Step 2: Add AutoMapper Mapping
 
-### 3. Restore Packages & Build
-
-```bash
-dotnet restore
-dotnet build
+```csharp
+// In Application/Common/Mappings/MappingProfile.cs — add to constructor:
+CreateMap<booking, BookingResponse>()
+    .ForMember(d => d.Id, opt => opt.MapFrom(s => s.id))
+    .ForMember(d => d.BookedDate, opt => opt.MapFrom(s => s.booked_date))
+    .ForMember(d => d.Status, opt => opt.MapFrom(s => s.status));
 ```
 
-### 4. Apply Database Migrations
+### Step 3: Create the Command/Query
 
-```bash
-dotnet ef database update --project Infstruction --startup-project DoctorBooking
+```csharp
+// Application/Features/Bookings/Commands/CreateBooking/CreateBookingCommand.cs
+public sealed record CreateBookingCommand(
+    long DoctorId, long SlotId, DateOnly BookedDate
+) : IRequest<ApiResponse<BookingResponse>>;
 ```
 
-### 5. Run the Application
+### Step 4: Create the Validator
 
-```bash
-dotnet run --project DoctorBooking
+```csharp
+// Application/Features/Bookings/Commands/CreateBooking/CreateBookingCommandValidator.cs
+public sealed class CreateBookingCommandValidator : AbstractValidator<CreateBookingCommand>
+{
+    public CreateBookingCommandValidator()
+    {
+        RuleFor(x => x.DoctorId).GreaterThan(0);
+        RuleFor(x => x.SlotId).GreaterThan(0);
+        RuleFor(x => x.BookedDate).GreaterThanOrEqualTo(DateOnly.FromDateTime(DateTime.Today));
+    }
+}
 ```
 
-### 6. Open Swagger UI
+### Step 5: Create the Handler
 
-Navigate to `https://localhost:{port}/swagger` in your browser.
+```csharp
+// Application/Features/Bookings/Commands/CreateBooking/CreateBookingCommandHandler.cs
+public sealed class CreateBookingCommandHandler
+    : IRequestHandler<CreateBookingCommand, ApiResponse<BookingResponse>>
+{
+    private readonly IApplicationDbContext _context;
+    private readonly IMapper _mapper;
 
-To test secured endpoints:
-1. Call `POST /api/auth/login` to get your access token
-2. Click **🔒 Authorize** in Swagger
-3. Paste your access token and click **Authorize**
+    public CreateBookingCommandHandler(IApplicationDbContext context, IMapper mapper)
+    {
+        _context = context;
+        _mapper = mapper;
+    }
 
----
+    public async Task<ApiResponse<BookingResponse>> Handle(
+        CreateBookingCommand request, CancellationToken cancellationToken)
+    {
+        // Business logic here...
+        var newBooking = new booking { /* ... */ };
+        _context.bookings.Add(newBooking);
+        await _context.SaveChangesAsync(cancellationToken);
 
-## 🌿 Branches
-
-| Branch | Description |
-|---|---|
-| `main` | Stable, production-ready code |
-| `feature/initial-setup` | Initial Clean Architecture scaffolding |
-| `feature/full-solution` | ✅ Full solution — JWT auth, Patient model, all controllers |
-
----
-
-## 🏛️ Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    DoctorBooking (API)                       │
-│         Controllers · Program.cs · appsettings.json         │
-└────────────────────────┬────────────────────────────────────┘
-                         │ depends on
-┌────────────────────────▼────────────────────────────────────┐
-│                   Infstruction (Infrastructure)              │
-│        AppDBContext · AuthService · TokenService             │
-│                    JwtSettings                               │
-└──────────┬─────────────────────────┬───────────────────────-┘
-           │ depends on              │ depends on
-┌──────────▼──────────┐   ┌─────────▼──────────────────────-─┐
-│   Application       │   │         Domain                    │
-│  IAuthService       │   │   patient · doctor · booking      │
-│  ITokenService      │   │   clinic · payment · review ...   │
-│  DTOs               │   │   (19 entity models)              │
-└─────────────────────┘   └───────────────────────────────────┘
+        return ApiResponse<BookingResponse>.Ok(
+            _mapper.Map<BookingResponse>(newBooking), "Booking created.");
+    }
+}
 ```
 
-**Dependency Rule**: Each layer only depends inward — API → Infrastructure → Application → Domain. Domain has zero external dependencies.
+### Step 6: Create the Controller
+
+```csharp
+// DoctorBooking/Controllers/BookingsController.cs
+[Route("api/[controller]")]
+[ApiController]
+[Authorize]
+public sealed class BookingsController : ControllerBase
+{
+    private readonly ISender _mediator;
+    public BookingsController(ISender mediator) => _mediator = mediator;
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateBookingCommand command)
+    {
+        var result = await _mediator.Send(command);
+        return result.Success ? Ok(result) : BadRequest(result);
+    }
+}
+```
+
+> **That's it!** No DI registration needed — MediatR, FluentValidation, and AutoMapper all auto-discover your new classes from the assembly.
 
 ---
 
-## 🔒 Security Features
+## 🏗️ Architecture Decision Records
 
-| Feature | Implementation |
-|---|---|
-| Password Hashing | BCrypt with work factor (BCrypt.Net-Next) |
-| Token Signing | HMAC-SHA256 symmetric key |
-| Refresh Token Storage | Hashed in `users` table with expiry |
-| Token Rotation | New refresh token issued on every `/refresh` call |
-| Soft Delete | `deleted_at` timestamp — data never hard-deleted |
-| Banned Accounts | `is_banned` + `ban_reason` checked at login |
-| CORS | Configurable, AllowAll in development |
+### Why No Repository Pattern?
+
+We use `IApplicationDbContext` directly instead of the Repository pattern because:
+- EF Core's `DbSet<T>` already **is** a repository + unit of work
+- Adding repositories creates an unnecessary abstraction layer
+- Vertical slices keep queries co-located with their handlers
+- LINQ queries are more expressive than generic `GetById()` methods
+
+### Why Vertical Slices Over Traditional Services?
+
+Traditional services (`PatientService`, `BookingService`) violate the **Single Responsibility Principle** — they grow into "god classes" as features increase. Vertical slices ensure:
+- Each feature is **self-contained** (command + validator + handler)
+- Adding a feature **never modifies** existing code
+- Features can be **tested independently**
+- The codebase **scales linearly** — 100 features = 100 isolated folders
+
+### Why AutoMapper Over Manual Mapping?
+
+- **Centralized** — All mappings in one `MappingProfile`
+- **Testable** — `AssertConfigurationIsValid()` catches mapping errors at test time
+- **Consistent** — Every handler uses `IMapper`, no mix of manual and auto
+- **Scalable** — Adding a new DTO requires only a new `CreateMap<>()` line
+
+### Why Soft Delete for Patients?
+
+Patient records are **soft-deleted** (`deleted_at` timestamp) because:
+- Medical booking history must be preserved for legal compliance
+- Payment records reference patient IDs
+- Reviews and chat history depend on patient existence
+- Admins can restore accidentally deleted accounts
 
 ---
 
-## 👥 Contributors
+## 📜 License
 
-| Name | Role |
-|---|---|
-| **Noureddine Osama** | Backend Architecture & JWT Implementation |
-| **Mohammed Taher** | Domain Modeling & Database Design |
-
----
-
-## 📄 License
-
-This project is built for **educational and development purposes**.  
-Feel free to use it as a reference for Clean Architecture with ASP.NET Core and JWT authentication.
-
----
-
-<div align="center">
-  Made with ❤️ using ASP.NET Core (.NET 10) & Clean Architecture
-</div>
+This project is proprietary. All rights reserved.

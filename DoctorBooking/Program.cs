@@ -1,47 +1,13 @@
-using System.Text;
-using Application.Interfaces;
-using Domain.Models;
-using Infrastructure.Services;
-using Infrastructure.Settings;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+using Application;
+using DoctorBooking.Middleware;
+using Infrastructure;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Database ─────────────────────────────────────────────────
-builder.Services.AddDbContext<AppDBContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// ── JWT Settings ─────────────────────────────────────────────
-builder.Services.Configure<JwtSettings>(
-    builder.Configuration.GetSection(JwtSettings.SectionName));
-
-var jwtSettings = builder.Configuration
-    .GetSection(JwtSettings.SectionName)
-    .Get<JwtSettings>()!;
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer           = true,
-            ValidateAudience         = true,
-            ValidateLifetime         = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer              = jwtSettings.Issuer,
-            ValidAudience            = jwtSettings.Audience,
-            IssuerSigningKey         = new SymmetricSecurityKey(
-                                           Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
-        };
-    });
-
-builder.Services.AddAuthorization();
-
-// ── Services ─────────────────────────────────────────────────
-builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+// ── Clean Architecture DI ────────────────────────────────────
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // ── CORS ──────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
@@ -51,28 +17,34 @@ builder.Services.AddCors(options =>
 // ── Controllers ───────────────────────────────────────────────
 builder.Services.AddControllers();
 
-// ── Swagger + JWT Bearer button ──────────────────────────────
+// ── Swagger + JWT Bearer ──────────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title   = "Doctor Booking API",
+        Version = "v1"
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name         = "Authorization",
-        Type         = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Type         = SecuritySchemeType.Http,
         Scheme       = "bearer",
         BearerFormat = "JWT",
-        In           = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        In           = ParameterLocation.Header,
         Description  = "Enter your JWT access token here."
     });
 
-    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            new OpenApiSecurityScheme
             {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                Reference = new OpenApiReference
                 {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Type = ReferenceType.SecurityScheme,
                     Id   = "Bearer"
                 }
             },
@@ -83,7 +55,9 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// ── Pipeline ─────────────────────────────────────────────────
+// ── Middleware Pipeline ───────────────────────────────────────
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

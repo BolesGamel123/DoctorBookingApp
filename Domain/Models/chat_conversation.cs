@@ -4,13 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace Domain.Models;
+namespace Domain.Entities;
 
-[Index("doctor_id", "last_message_at", Name = "IX_cc_doctor_inbox", IsDescending = new[] { false, true })]
-[Index("user_id", "last_message_at", Name = "IX_cc_user_inbox", IsDescending = new[] { false, true })]
-[Index("user_id", "doctor_id", Name = "UQ_chat_conversations", IsUnique = true)]
 public partial class chat_conversation
 {
     [Key]

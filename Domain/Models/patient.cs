@@ -4,14 +4,10 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace Domain.Models;
+namespace Domain.Entities;
 
 [Table("users")]
-[Index("is_active", "is_banned", Name = "IX_users_status")]
-[Index("email", Name = "UQ_users_email", IsUnique = true)]
-[Index("mobile_number", Name = "UQ_users_mobile", IsUnique = true)]
 public partial class patient
 {
     [Key]

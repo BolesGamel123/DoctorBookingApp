@@ -1,7 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Application.DTOs;
-using Application.Interfaces;
+using Application.Common.Models;
+using Application.Features.Auth.Commands.Login;
+using Application.Features.Auth.Commands.RefreshToken;
+using Application.Features.Auth.Commands.Register;
+using Application.Features.Auth.Commands.RevokeToken;
+using Application.Features.Auth.DTOs;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,49 +14,34 @@ namespace DoctorBooking.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class AuthController : ControllerBase
+public sealed class AuthController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly ISender _mediator;
 
-    public AuthController(IAuthService authService)
-    {
-        _authService = authService;
-    }
+    public AuthController(ISender mediator) => _mediator = mediator;
 
     /// <summary>Register a new patient account.</summary>
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    public async Task<IActionResult> Register([FromBody] RegisterCommand command)
     {
-        var result = await _authService.RegisterAsync(request);
-
-        if (!result.Succeeded)
-            return BadRequest(ApiResponse<AuthResult>.Fail("Registration failed.", result.Errors));
-
-        return Ok(ApiResponse<AuthResult>.Ok(result, "Registration successful."));
+        var result = await _mediator.Send(command);
+        return result.Success ? Ok(result) : BadRequest(result);
     }
 
     /// <summary>Login with email and password.</summary>
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginCommand command)
     {
-        var result = await _authService.LoginAsync(request);
-
-        if (!result.Succeeded)
-            return Unauthorized(ApiResponse<AuthResult>.Fail("Login failed.", result.Errors));
-
-        return Ok(ApiResponse<AuthResult>.Ok(result, "Login successful."));
+        var result = await _mediator.Send(command);
+        return result.Success ? Ok(result) : Unauthorized(result);
     }
 
     /// <summary>Refresh access token using a valid refresh token.</summary>
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+    public async Task<IActionResult> Refresh([FromBody] RefreshTokenCommand command)
     {
-        var result = await _authService.RefreshTokenAsync(request.RefreshToken);
-
-        if (!result.Succeeded)
-            return Unauthorized(ApiResponse<AuthResult>.Fail("Token refresh failed.", result.Errors));
-
-        return Ok(ApiResponse<AuthResult>.Ok(result, "Token refreshed."));
+        var result = await _mediator.Send(command);
+        return result.Success ? Ok(result) : Unauthorized(result);
     }
 
     /// <summary>Revoke refresh token (logout).</summary>
@@ -59,12 +49,8 @@ public class AuthController : ControllerBase
     [HttpPost("revoke")]
     public async Task<IActionResult> Revoke()
     {
-        var userId  = long.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
-        var revoked = await _authService.RevokeTokenAsync(userId);
-
-        if (!revoked)
-            return NotFound(ApiResponse<string>.Fail("Patient not found."));
-
-        return Ok(ApiResponse<string>.Ok("Refresh token revoked.", "Logged out successfully."));
+        var userId = long.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
+        var result = await _mediator.Send(new RevokeTokenCommand(userId));
+        return result.Success ? Ok(result) : NotFound(result);
     }
 }
