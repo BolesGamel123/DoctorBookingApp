@@ -4,13 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace Domain.Models;
+namespace Domain.Entities;
 
-[Index("doctor_id", "is_visible", Name = "IX_reviews_doctor")]
-[Index("rating", Name = "IX_reviews_rating")]
-[Index("booking_id", Name = "UQ_reviews_booking", IsUnique = true)]
 public partial class review
 {
     [Key]

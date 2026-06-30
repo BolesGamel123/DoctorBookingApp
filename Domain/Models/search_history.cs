@@ -4,11 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace Domain.Models;
+namespace Domain.Entities;
 
-[Index("user_id", "created_at", Name = "IX_sh_user_recent", IsDescending = new[] { false, true })]
 public partial class search_history
 {
     [Key]

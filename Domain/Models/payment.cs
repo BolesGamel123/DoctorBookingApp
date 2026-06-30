@@ -4,14 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace Domain.Models;
+namespace Domain.Entities;
 
-[Index("doctor_id", Name = "IX_payments_doctor")]
-[Index("user_id", "status", Name = "IX_payments_user")]
-[Index("booking_id", Name = "UQ_payments_booking", IsUnique = true)]
-[Index("gateway_transaction_id", Name = "UQ_payments_gateway_txn", IsUnique = true)]
 public partial class payment
 {
     [Key]

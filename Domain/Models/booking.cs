@@ -4,15 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
 
-namespace Domain.Models;
+namespace Domain.Entities;
 
-[Index("booked_date", Name = "IX_bookings_date")]
-[Index("doctor_id", "status", Name = "IX_bookings_doctor")]
-[Index("availability_slot_id", Name = "IX_bookings_slot")]
-[Index("user_id", "status", Name = "IX_bookings_user")]
-[Index("booking_reference", Name = "UQ_bookings_reference", IsUnique = true)]
 public partial class booking
 {
     [Key]

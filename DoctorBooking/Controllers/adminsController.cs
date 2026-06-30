@@ -1,103 +1,67 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Application.Features.Admins.Commands.CreateAdmin;
+using Application.Features.Admins.Commands.DeleteAdmin;
+using Application.Features.Admins.Commands.UpdateAdmin;
+using Application.Features.Admins.Queries.GetAdminById;
+using Application.Features.Admins.Queries.GetAllAdmins;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Domain.Models;
 
-namespace DoctorBooking.Controllers
+namespace DoctorBooking.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public sealed class AdminsController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class adminsController : ControllerBase
+    private readonly ISender _mediator;
+
+    public AdminsController(ISender mediator) => _mediator = mediator;
+
+    /// <summary>Get all admins.</summary>
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
     {
-        private readonly AppDBContext _context;
+        var result = await _mediator.Send(new GetAllAdminsQuery());
+        return Ok(result);
+    }
 
-        public adminsController(AppDBContext context)
-        {
-            _context = context;
-        }
+    /// <summary>Get admin by ID.</summary>
+    [HttpGet("{id:long}")]
+    public async Task<IActionResult> GetById(long id)
+    {
+        var result = await _mediator.Send(new GetAdminByIdQuery(id));
+        return result.Success ? Ok(result) : NotFound(result);
+    }
 
-        // GET: api/admins
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<admin>>> Getadmins()
-        {
-            return await _context.admins.ToListAsync();
-        }
+    /// <summary>Create a new admin.</summary>
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateAdminCommand command)
+    {
+        var result = await _mediator.Send(command);
+        return result.Success
+            ? CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result)
+            : BadRequest(result);
+    }
 
-        // GET: api/admins/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<admin>> Getadmin(long id)
-        {
-            var admin = await _context.admins.FindAsync(id);
+    /// <summary>Update an existing admin.</summary>
+    [HttpPut("{id:long}")]
+    public async Task<IActionResult> Update(long id, [FromBody] UpdateAdminRequest request)
+    {
+        var command = new UpdateAdminCommand(id, request.FullName, request.Email, request.Role);
+        var result = await _mediator.Send(command);
+        return result.Success ? Ok(result) : NotFound(result);
+    }
 
-            if (admin == null)
-            {
-                return NotFound();
-            }
-
-            return admin;
-        }
-
-        // PUT: api/admins/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Putadmin(long id, admin admin)
-        {
-            if (id != admin.id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(admin).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!adminExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/admins
-        [HttpPost]
-        public async Task<ActionResult<admin>> Postadmin(admin admin)
-        {
-            _context.admins.Add(admin);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("Getadmin", new { id = admin.id }, admin);
-        }
-
-        // DELETE: api/admins/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Deleteadmin(long id)
-        {
-            var admin = await _context.admins.FindAsync(id);
-            if (admin == null)
-            {
-                return NotFound();
-            }
-
-            _context.admins.Remove(admin);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool adminExists(long id)
-        {
-            return _context.admins.Any(e => e.id == id);
-        }
+    /// <summary>Delete an admin.</summary>
+    [HttpDelete("{id:long}")]
+    public async Task<IActionResult> Delete(long id)
+    {
+        var result = await _mediator.Send(new DeleteAdminCommand(id));
+        return result.Success ? Ok(result) : NotFound(result);
     }
 }
+
+/// <summary>Input DTO for admin updates.</summary>
+public sealed record UpdateAdminRequest(
+    string FullName,
+    string Email,
+    string Role);
