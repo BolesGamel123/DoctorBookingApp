@@ -7,7 +7,7 @@
 ![SQL Server](https://img.shields.io/badge/SQL_Server-2022-CC2927?style=for-the-badge&logo=microsoftsqlserver)
 ![JWT](https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens)
 ![Swagger](https://img.shields.io/badge/Swagger-UI-85EA2D?style=for-the-badge&logo=swagger)
-![License](https://img.shields.io/badge/License-Educational-blue?style=for-the-badge)
+
 
 **A production-ready REST API for a complete Doctor Booking & Appointment Management Platform.**  
 Built with Clean Architecture, ASP.NET Core (.NET 10), EF Core, and JWT Bearer authentication.
