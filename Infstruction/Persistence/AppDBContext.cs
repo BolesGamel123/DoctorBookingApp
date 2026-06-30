@@ -107,7 +107,7 @@ public partial class AppDBContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_bookings_specialty");
 
-            entity.HasOne(d => d.user).WithMany(p => p.bookings)
+            entity.HasOne(d => d.patient).WithMany(p => p.bookings)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_bookings_user");
         });
@@ -125,7 +125,7 @@ public partial class AppDBContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_cc_last_message");
 
-            entity.HasOne(d => d.user).WithMany(p => p.chat_conversations)
+            entity.HasOne(d => d.patient).WithMany(p => p.chat_conversations)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_cc_user");
         });
@@ -218,7 +218,7 @@ public partial class AppDBContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_favorites_doctor");
 
-            entity.HasOne(d => d.user).WithMany(p => p.favorites)
+            entity.HasOne(d => d.patient).WithMany(p => p.favorites)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_favorites_user");
         });
@@ -261,7 +261,7 @@ public partial class AppDBContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_payments_doctor");
 
-            entity.HasOne(d => d.user).WithMany(p => p.payments)
+            entity.HasOne(d => d.patient).WithMany(p => p.payments)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_payments_user");
         });
@@ -280,7 +280,7 @@ public partial class AppDBContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_reviews_doctor");
 
-            entity.HasOne(d => d.user).WithMany(p => p.reviews)
+            entity.HasOne(d => d.patient).WithMany(p => p.reviews)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_reviews_user");
         });
@@ -304,7 +304,7 @@ public partial class AppDBContext : DbContext
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.search_type).HasDefaultValue("general");
 
-            entity.HasOne(d => d.user).WithMany(p => p.search_histories)
+            entity.HasOne(d => d.patient).WithMany(p => p.search_histories)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_sh_user");
         });
