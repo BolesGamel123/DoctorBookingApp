@@ -1,0 +1,126 @@
+﻿{
+   "CodeGenerationMode": 6,
+   "ContextClassName": "AppDBContext",
+   "ContextNamespace": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": true,
+   "IrregularWords": null,
+   "MinimumProductVersion": "2.6.1604",
+   "ModelNamespace": null,
+   "OutputContextPath": null,
+   "OutputPath": "Models",
+   "PluralRules": null,
+   "PreserveCasingWithRegex": true,
+   "ProjectRootNamespace": "Domain",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 2,
+   "SelectedToBeGenerated": 0,
+   "SingularRules": null,
+   "T4TemplatePath": null,
+   "Tables": [
+      {
+         "Name": "[dbo].[admins]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[announcements]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[bookings]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[chat_conversations]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[chat_messages]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[clinics]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[doctor_availability_slots]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[doctors]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[faqs]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[favorites]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[notification_preferences]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[notifications]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[payments]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[review_responses]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[reviews]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[search_histories]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[specialties]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[system_logs]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[users]",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": null,
+   "UncountableWords": null,
+   "UseAsyncStoredProcedureCalls": true,
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": true,
+   "UseDatabaseNamesForRoutines": true,
+   "UseDateOnlyTimeOnly": true,
+   "UseDbContextSplitting": false,
+   "UseDecimalDataAnnotationForSprocResult": true,
+   "UseFluentApiOnly": false,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": true,
+   "UseInternalAccessModifiersForSprocsAndFunctions": false,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": false,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UsePrefixNavigationNaming": false,
+   "UseSchemaFolders": false,
+   "UseSchemaNamespaces": false,
+   "UseSpatial": false,
+   "UseT4": false,
+   "UseT4Split": false,
+   "UseTypedTvpParameters": true
+}

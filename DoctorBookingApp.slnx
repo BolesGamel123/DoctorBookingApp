@@ -1,3 +1,6 @@
 <Solution>
+  <Project Path="Application/Application.csproj" Id="56e578eb-847d-436d-ab3f-97e925dc8826" />
   <Project Path="DoctorBooking/DoctorBooking.csproj" />
+  <Project Path="Domain/Domain.csproj" Id="66708f41-6586-4d18-8a64-27b92c3f764b" />
+  <Project Path="Infstruction/Infrastructure.csproj" Id="e8c411c2-7374-4496-92cb-bdd5af1028c6" />
 </Solution>
