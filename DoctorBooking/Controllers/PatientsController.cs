@@ -25,7 +25,7 @@ public class PatientsController : ControllerBase
     public async Task<IActionResult> GetMe()
     {
         var patientId = GetCurrentUserId();
-        var patient = await _context.users
+        var patient = await _context.patients
             .FirstOrDefaultAsync(u => u.id == patientId && u.deleted_at == null);
 
         if (patient == null)
@@ -39,7 +39,7 @@ public class PatientsController : ControllerBase
     public async Task<IActionResult> UpdateMe([FromBody] UpdatePatientRequest request)
     {
         var patientId = GetCurrentUserId();
-        var patient = await _context.users
+        var patient = await _context.patients
             .FirstOrDefaultAsync(u => u.id == patientId && u.deleted_at == null);
 
         if (patient == null)
@@ -64,7 +64,7 @@ public class PatientsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var query = _context.users.Where(u => u.deleted_at == null);
+        var query = _context.patients.Where(u => u.deleted_at == null);
 
         var totalCount = await query.CountAsync();
         var patients = await query
@@ -83,7 +83,7 @@ public class PatientsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetById(long id)
     {
-        var patient = await _context.users
+        var patient = await _context.patients
             .FirstOrDefaultAsync(u => u.id == id && u.deleted_at == null);
 
         if (patient == null)
@@ -97,7 +97,7 @@ public class PatientsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(long id)
     {
-        var patient = await _context.users.FindAsync(id);
+        var patient = await _context.patients.FindAsync(id);
         if (patient == null || patient.deleted_at != null)
             return NotFound(ApiResponse<string>.Fail("Patient not found."));
 
@@ -119,7 +119,7 @@ public class PatientsController : ControllerBase
         return long.Parse(sub!);
     }
 
-    private static PatientDto MapToDto(user u) => new()
+    private static PatientDto MapToDto(patient u) => new()
     {
         Id              = u.id,
         FullName        = u.full_name,

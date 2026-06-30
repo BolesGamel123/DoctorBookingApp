@@ -25,13 +25,13 @@ public class AuthService : IAuthService
         if (request.Password != request.ConfirmPassword)
             return AuthResult.Failure("Passwords do not match.");
 
-        if (await _context.users.AnyAsync(u => u.email == request.Email && u.deleted_at == null))
+        if (await _context.patients.AnyAsync(u => u.email == request.Email && u.deleted_at == null))
             return AuthResult.Failure("Email is already registered.");
 
-        if (await _context.users.AnyAsync(u => u.mobile_number == request.MobileNumber && u.deleted_at == null))
+        if (await _context.patients.AnyAsync(u => u.mobile_number == request.MobileNumber && u.deleted_at == null))
             return AuthResult.Failure("Mobile number is already registered.");
 
-        var newPatient = new user
+        var newPatient = new patient
         {
             full_name     = request.FullName,
             email         = request.Email,
@@ -44,7 +44,7 @@ public class AuthService : IAuthService
             updated_at    = DateTime.UtcNow
         };
 
-        _context.users.Add(newPatient);
+        _context.patients.Add(newPatient);
         await _context.SaveChangesAsync();
 
         var roles        = new List<string> { "Patient" };
@@ -61,7 +61,7 @@ public class AuthService : IAuthService
 
     public async Task<AuthResult> LoginAsync(LoginRequest request)
     {
-        var patient = await _context.users
+        var patient = await _context.patients
             .FirstOrDefaultAsync(u => u.email == request.Email && u.deleted_at == null);
 
         if (patient == null)
@@ -91,7 +91,7 @@ public class AuthService : IAuthService
 
     public async Task<AuthResult> RefreshTokenAsync(string refreshToken)
     {
-        var patient = await _context.users
+        var patient = await _context.patients
             .FirstOrDefaultAsync(u => u.refresh_token == refreshToken && u.deleted_at == null);
 
         if (patient == null || patient.refresh_token_expiry < DateTime.UtcNow)
@@ -112,7 +112,7 @@ public class AuthService : IAuthService
 
     public async Task<bool> RevokeTokenAsync(long userId)
     {
-        var patient = await _context.users.FindAsync(userId);
+        var patient = await _context.patients.FindAsync(userId);
         if (patient == null) return false;
 
         patient.refresh_token        = null;
@@ -124,7 +124,7 @@ public class AuthService : IAuthService
 
     // ── Helper ─────────────────────────────────────────────
 
-    private static PatientDto MapToDto(user u) => new()
+    private static PatientDto MapToDto(patient u) => new()
     {
         Id             = u.id,
         FullName       = u.full_name,
