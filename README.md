@@ -6,7 +6,7 @@ A full-featured **Doctor Booking & Appointment Management System** built with **
 
 ## 📌 Overview
 
-This application allows patients to register, search for doctors by specialty, book appointments, chat with doctors, receive notifications, and manage payments — all through a secure REST API with JWT authentication.
+This application allows **patients** to register, search for doctors by specialty, book appointments, chat with doctors, receive notifications, and manage payments — all through a secure REST API with JWT authentication.
 
 ---
 
@@ -19,7 +19,7 @@ This application allows patients to register, search for doctors by specialty, b
 | Database | SQL Server |
 | Authentication | JWT Bearer Tokens |
 | Architecture | Clean Architecture (Domain, Application, Infrastructure, API) |
-| Validation | FluentValidation + MediatR Pipeline |
+| Password Hashing | BCrypt.Net |
 
 ---
 
@@ -27,8 +27,9 @@ This application allows patients to register, search for doctors by specialty, b
 
 ```
 DoctorBookingApp/
-├── Domain/                         # Core business models & interfaces
+├── Domain/                          # Core business models & interfaces
 │   └── Models/
+│       ├── patient.cs               # Patient (maps to "users" table)
 │       ├── admin.cs
 │       ├── announcement.cs
 │       ├── booking.cs
@@ -46,16 +47,33 @@ DoctorBookingApp/
 │       ├── review_response.cs
 │       ├── search_history.cs
 │       ├── specialty.cs
-│       ├── system_log.cs
-│       └── user.cs
+│       └── system_log.cs
 │
-├── Application/                    # Use cases, CQRS handlers, validators
+├── Application/                     # DTOs & service interfaces
+│   ├── DTOs/
+│   │   └── Dtos.cs                  # PatientDto, AuthResult, ApiResponse<T> ...
+│   └── Interfaces/
+│       ├── IAuthService.cs
+│       └── ITokenService.cs
 │
-├── Infstruction/                   # EF Core DbContext, repositories, persistence
-│   └── Persistence/
-│       └── AppDBContext.cs
+├── Infstruction/                    # EF Core DbContext, services, settings
+│   ├── Persistence/
+│   │   └── AppDBContext.cs
+│   ├── Services/
+│   │   ├── AuthService.cs           # Register / Login / Refresh / Revoke
+│   │   └── TokenService.cs          # JWT access + refresh token generation
+│   └── Settings/
+│       └── JwtSettings.cs           # JWT config binding
 │
-└── DoctorBooking/                  # ASP.NET Core Web API (controllers, middleware)
+└── DoctorBooking/                   # ASP.NET Core Web API
+    ├── Controllers/
+    │   ├── AuthController.cs        # POST register / login / refresh / revoke
+    │   ├── PatientsController.cs    # GET/PUT me, Admin: list / get / delete
+    │   └── adminsController.cs      # Admin CRUD
+    ├── Swagger/
+    │   └── SwaggerConfig.cs         # Swagger + JWT Bearer button
+    ├── Program.cs
+    └── appsettings.json
 ```
 
 ---
@@ -64,7 +82,7 @@ DoctorBookingApp/
 
 | Model | Description |
 |---|---|
-| `User` | Patient accounts with profile info |
+| `Patient` | Patient accounts (maps to `users` table in DB) |
 | `Admin` | Admin accounts for platform management |
 | `Doctor` | Doctor profiles with specialty & clinic info |
 | `Clinic` | Clinic details linked to doctors |
@@ -76,8 +94,8 @@ DoctorBookingApp/
 | `ReviewResponse` | Doctor responses to reviews |
 | `ChatConversation` | Chat session between patient and doctor |
 | `ChatMessage` | Individual messages within a conversation |
-| `Notification` | In-app notifications for users |
-| `NotificationPreference` | Per-user notification settings |
+| `Notification` | In-app notifications |
+| `NotificationPreference` | Per-patient notification settings |
 | `Favorite` | Patient's saved/favorite doctors |
 | `SearchHistory` | Patient's doctor search history |
 | `Announcement` | Platform-wide announcements |
@@ -86,11 +104,38 @@ DoctorBookingApp/
 
 ---
 
-## 🔐 Authentication
+## 🔐 Authentication (JWT)
 
-- JWT Bearer token authentication
-- Separate login endpoints for **Users**, **Doctors**, and **Admins**
-- Token-based identity verification on all protected endpoints
+All auth endpoints are under `api/auth`:
+
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| `POST` | `/api/auth/register` | Register a new patient account | ❌ |
+| `POST` | `/api/auth/login` | Login and get access + refresh token | ❌ |
+| `POST` | `/api/auth/refresh` | Get new access token via refresh token | ❌ |
+| `POST` | `/api/auth/revoke` | Logout / revoke refresh token | ✅ |
+
+**Token response includes:**
+```json
+{
+  "accessToken": "eyJhbGci...",
+  "refreshToken": "base64string...",
+  "expiresAt": "2026-07-01T...",
+  "patient": { "id": 1, "fullName": "...", "email": "..." }
+}
+```
+
+---
+
+## 👤 Patient Endpoints
+
+| Method | Endpoint | Description | Role |
+|---|---|---|---|
+| `GET` | `/api/patients/me` | Get my profile | Patient |
+| `PUT` | `/api/patients/me` | Update my profile | Patient |
+| `GET` | `/api/patients` | List all patients (paginated) | Admin |
+| `GET` | `/api/patients/{id}` | Get patient by ID | Admin |
+| `DELETE` | `/api/patients/{id}` | Soft-delete patient | Admin |
 
 ---
 
@@ -121,7 +166,7 @@ dotnet ef database update --project Infstruction --startup-project DoctorBooking
 dotnet run --project DoctorBooking
 ```
 
-The API will be available at `https://localhost:5001` (or configured port).
+Swagger UI: `https://localhost:{port}/swagger`
 
 ---
 
@@ -131,7 +176,7 @@ The API will be available at `https://localhost:5001` (or configured port).
 |---|---|
 | `main` | Stable production-ready code |
 | `feature/initial-setup` | Initial Clean Architecture setup |
-| `feature/full-solution` | Full solution with all domain models |
+| `feature/full-solution` | Full solution with all models, JWT, Swagger |
 
 ---
 
