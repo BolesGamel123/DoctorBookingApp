@@ -49,7 +49,7 @@ public partial class chat_conversation
 
     [ForeignKey("doctor_id")]
     [InverseProperty("Chat_conversations")]
-    public virtual Doctor doctor { get; set; }
+    public virtual doctor doctor { get; set; }
 
     [ForeignKey("last_message_id")]
     [InverseProperty("Chat_conversations")]
@@ -57,5 +57,5 @@ public partial class chat_conversation
 
     [ForeignKey("user_id")]
     [InverseProperty("Chat_conversations")]
-    public virtual User user { get; set; }
+    public virtual user user { get; set; }
 }

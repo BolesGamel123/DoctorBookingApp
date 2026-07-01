@@ -12,7 +12,7 @@ namespace Domain.Models;
 [Index("user_id", "status", Name = "IX_payments_user")]
 [Index("booking_id", Name = "UQ_payments_booking", IsUnique = true)]
 [Index("gateway_transaction_id", Name = "UQ_payments_gateway_txn", IsUnique = true)]
-public partial class Payment
+public partial class payment
 {
     [Key]
     public long id { get; set; }
@@ -67,14 +67,14 @@ public partial class Payment
     public DateTime updated_at { get; set; }
 
     [ForeignKey("booking_id")]
-    [InverseProperty("Payment")]
-    public virtual Booking booking { get; set; }
+    [InverseProperty("payment")]
+    public virtual booking booking { get; set; }
 
     [ForeignKey("doctor_id")]
     [InverseProperty("Payments")]
-    public virtual Doctor doctor { get; set; }
+    public virtual doctor doctor { get; set; }
 
     [ForeignKey("user_id")]
     [InverseProperty("Payments")]
-    public virtual User user { get; set; }
+    public virtual user user { get; set; }
 }

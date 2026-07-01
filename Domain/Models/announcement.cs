@@ -8,7 +8,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Models;
 
-public partial class Announcement
+public partial class announcement
+
 {
     [Key]
     public long id { get; set; }
@@ -40,5 +41,5 @@ public partial class Announcement
 
     [ForeignKey("admin_id")]
     [InverseProperty("announcements")]
-    public virtual Admin admin { get; set; }
+    public virtual admin admin { get; set; }
 }

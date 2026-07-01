@@ -38,7 +38,7 @@ public class AuthResult
         => new() { Succeeded = false, Errors = [.. errors] };
 }
 
-// ── User DTOs ──────────────────────────────────────────────
+// ── user DTOs ──────────────────────────────────────────────
 
 public class UserDto
 {

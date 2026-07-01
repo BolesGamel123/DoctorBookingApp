@@ -21,7 +21,7 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get current authenticated User's profile.
+    /// Get current authenticated user's profile.
     /// </summary>
     [HttpGet("me")]
     public async Task<IActionResult> GetMe()
@@ -31,13 +31,13 @@ public class UsersController : ControllerBase
             .FirstOrDefaultAsync(u => u.id == userId && u.deleted_at == null);
 
         if (existingUser == null)
-            return NotFound(ApiResponse<string>.Fail("User not found."));
+            return NotFound(ApiResponse<string>.Fail("user not found."));
 
         return Ok(ApiResponse<UserDto>.Ok(MapToDto(existingUser)));
     }
 
     /// <summary>
-    /// Update current authenticated User's profile.
+    /// Update current authenticated user's profile.
     /// </summary>
     [HttpPut("me")]
     public async Task<IActionResult> UpdateMe([FromBody] UpdateUserRequest request)
@@ -47,7 +47,7 @@ public class UsersController : ControllerBase
             .FirstOrDefaultAsync(u => u.id == userId && u.deleted_at == null);
 
         if (existingUser == null)
-            return NotFound(ApiResponse<string>.Fail("User not found."));
+            return NotFound(ApiResponse<string>.Fail("user not found."));
 
         if (request.FullName is not null) existingUser.full_name = request.FullName;
         if (request.MobileNumber is not null) existingUser.mobile_number = request.MobileNumber;
@@ -64,10 +64,10 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get all users (Admin only, paginated).
+    /// Get all users (admin only, paginated).
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
         var query = _context.users.Where(u => u.deleted_at == null);
@@ -85,31 +85,31 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get a User by ID (Admin only).
+    /// Get a user by ID (admin only).
     /// </summary>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> GetById(long id)
     {
         var existingUser = await _context.users
             .FirstOrDefaultAsync(u => u.id == id && u.deleted_at == null);
 
         if (existingUser == null)
-            return NotFound(ApiResponse<string>.Fail("User not found."));
+            return NotFound(ApiResponse<string>.Fail("user not found."));
 
         return Ok(ApiResponse<UserDto>.Ok(MapToDto(existingUser)));
     }
 
     /// <summary>
-    /// Soft-delete a User (Admin only).
+    /// Soft-delete a user (admin only).
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Delete(long id)
     {
         var existingUser = await _context.users.FindAsync(id);
         if (existingUser == null || existingUser.deleted_at != null)
-            return NotFound(ApiResponse<string>.Fail("User not found."));
+            return NotFound(ApiResponse<string>.Fail("user not found."));
 
         existingUser.deleted_at = DateTime.UtcNow;
         existingUser.is_active = false;
@@ -118,7 +118,7 @@ public class UsersController : ControllerBase
         existingUser.updated_at = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
-        return Ok(ApiResponse<string>.Ok("User deleted.", "User soft-deleted successfully."));
+        return Ok(ApiResponse<string>.Ok("user deleted.", "user soft-deleted successfully."));
     }
 
     // ── Helpers ────────────────────────────────────────────
@@ -129,7 +129,7 @@ public class UsersController : ControllerBase
         return long.Parse(sub!);
     }
 
-    private static UserDto MapToDto(User u) => new()
+    private static UserDto MapToDto(user u) => new()
     {
         Id = u.id,
         FullName = u.full_name,

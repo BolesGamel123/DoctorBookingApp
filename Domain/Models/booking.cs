@@ -13,7 +13,7 @@ namespace Domain.Models;
 [Index("availability_slot_id", Name = "IX_bookings_slot")]
 [Index("user_id", "status", Name = "IX_bookings_user")]
 [Index("booking_reference", Name = "UQ_bookings_reference", IsUnique = true)]
-public partial class Booking
+public partial class booking
 {
     [Key]
     public long id { get; set; }
@@ -77,7 +77,7 @@ public partial class Booking
     public DateTime updated_at { get; set; }
 
     [InverseProperty("original_booking")]
-    public virtual ICollection<Booking> Inverseoriginal_booking { get; set; } = new List<Booking>();
+    public virtual ICollection<booking> Inverseoriginal_booking { get; set; } = new List<booking>();
 
     [ForeignKey("availability_slot_id")]
     [InverseProperty("Bookings")]
@@ -89,19 +89,19 @@ public partial class Booking
 
     [ForeignKey("doctor_id")]
     [InverseProperty("Bookings")]
-    public virtual Doctor doctor { get; set; }
+    public virtual doctor doctor { get; set; }
 
-    [InverseProperty("Booking")]
+    [InverseProperty("booking")]
     public virtual ICollection<doctor_availability_slot> doctor_availability_slots { get; set; } = new List<doctor_availability_slot>();
 
     [ForeignKey("original_booking_id")]
     [InverseProperty("Inverseoriginal_booking")]
-    public virtual Booking original_booking { get; set; }
+    public virtual booking original_booking { get; set; }
 
-    [InverseProperty("Booking")]
-    public virtual Payment payment { get; set; }
+    [InverseProperty("booking")]
+    public virtual payment payment { get; set; }
 
-    [InverseProperty("Booking")]
+    [InverseProperty("booking")]
     public virtual review review { get; set; }
 
     [ForeignKey("specialty_id")]
@@ -110,5 +110,5 @@ public partial class Booking
 
     [ForeignKey("user_id")]
     [InverseProperty("Bookings")]
-    public virtual User user { get; set; }
+    public virtual user user { get; set; }
 }

@@ -32,22 +32,22 @@ public class PaymentService : IPaymentService
             .FirstOrDefaultAsync(b => b.id == request.BookingId);
 
         if (booking == null)
-            throw new ArgumentException("Booking not found.");
+            throw new ArgumentException("booking not found.");
 
         if (booking.user_id != currentUserId)
-            throw new UnauthorizedAccessException("You are not authorized to pay for this Booking.");
+            throw new UnauthorizedAccessException("You are not authorized to pay for this booking.");
 
         if (booking.status != "pending")
-            throw new InvalidOperationException($"Cannot pay for Booking in '{booking.status}' status.");
+            throw new InvalidOperationException($"Cannot pay for booking in '{booking.status}' status.");
 
         if (booking.session_price <= 0)
-            throw new InvalidOperationException("Invalid Booking price.");
+            throw new InvalidOperationException("Invalid booking price.");
 
         
         var existingPayment = await _context.payments
             .FirstOrDefaultAsync(p => p.booking_id == booking.id && p.status == "completed");
         if (existingPayment != null)
-            throw new InvalidOperationException("This Booking has already been paid for.");
+            throw new InvalidOperationException("This booking has already been paid for.");
 
         if (request.UseStripe)
         { 
@@ -66,14 +66,14 @@ public class PaymentService : IPaymentService
                             Currency = currencyCode,
                             ProductData = new SessionLineItemPriceDataProductDataOptions
                             {
-                                Name = $"Doctor Consultation - Dr. {booking.doctor.full_name}",
+                                Name = $"doctor Consultation - Dr. {booking.doctor.full_name}",
                                 Description = $"Session scheduled on {booking.booked_date} at {booking.booked_start_time}",
                             },
                         },
                         Quantity = 1,
                     },
                 },
-                Mode = "Payment",
+                Mode = "payment",
                 SuccessUrl = request.SuccessUrl + "?session_id={CHECKOUT_SESSION_ID}&booking_id=" + booking.id,
                 CancelUrl = request.CancelUrl,
                 CustomerEmail = booking.user?.email,
@@ -122,18 +122,18 @@ public class PaymentService : IPaymentService
             .FirstOrDefaultAsync(b => b.id == request.BookingId);
 
         if (booking == null)
-            throw new ArgumentException("Booking not found.");
+            throw new ArgumentException("booking not found.");
 
         if (booking.user_id != currentUserId)
-            throw new UnauthorizedAccessException("You are not authorized to pay for this Booking.");
+            throw new UnauthorizedAccessException("You are not authorized to pay for this booking.");
 
         if (booking.status != "pending")
-            throw new InvalidOperationException($"Booking status is '{booking.status}'. Only pending Bookings can be confirmed.");
+            throw new InvalidOperationException($"booking status is '{booking.status}'. Only pending Bookings can be confirmed.");
 
         var existingPayment = await _context.payments
             .FirstOrDefaultAsync(p => p.booking_id == booking.id && p.status == "completed");
         if (existingPayment != null)
-            throw new InvalidOperationException("This Booking has already been paid for.");
+            throw new InvalidOperationException("This booking has already been paid for.");
 
         string gatewayTransactionId = request.GatewayTransactionId;
         string gatewayResponse = request.GatewayResponse;
@@ -159,7 +159,7 @@ public class PaymentService : IPaymentService
             PaymentIntent pi = await service.GetAsync(request.GatewayTransactionId);
 
             if (pi.Status != "succeeded")
-                throw new InvalidOperationException($"The Stripe Payment intent status is '{pi.Status}', not succeeded.");
+                throw new InvalidOperationException($"The Stripe payment intent status is '{pi.Status}', not succeeded.");
 
             gatewayTransactionId = pi.Id;
             gatewayResponse = System.Text.Json.JsonSerializer.Serialize(pi);
@@ -181,7 +181,7 @@ public class PaymentService : IPaymentService
         decimal doctorEarnings = booking.session_price - platformFee;
 
        
-        var payment = new Payment
+        var payment = new payment
         {
             booking_id = booking.id,
             user_id = booking.user_id,
@@ -295,23 +295,23 @@ public class PaymentService : IPaymentService
 
     public async Task<RefundResultDto> RefundPaymentAsync(RefundRequestDto request, long currentUserId, string currentUserRole)
     {
-        // 1. Fetch the Payment
+        // 1. Fetch the payment
         var payment = await _context.payments
             .Include(p => p.booking)
             .FirstOrDefaultAsync(p => p.id == request.PaymentId);
 
         if (payment == null)
-            throw new ArgumentException("Payment record not found.");
+            throw new ArgumentException("payment record not found.");
 
         if (payment.status != "completed")
-            throw new InvalidOperationException($"Cannot refund Payment with status '{payment.status}'. Only completed Payments can be refunded.");
+            throw new InvalidOperationException($"Cannot refund payment with status '{payment.status}'. Only completed Payments can be refunded.");
 
         // 2. Authorization Checks
-        if (currentUserRole == "User" && payment.user_id != currentUserId)
-            throw new UnauthorizedAccessException("You are not authorized to request a refund for this Payment.");
+        if (currentUserRole == "user" && payment.user_id != currentUserId)
+            throw new UnauthorizedAccessException("You are not authorized to request a refund for this payment.");
 
-        if (currentUserRole == "Doctor" && payment.doctor_id != currentUserId)
-            throw new UnauthorizedAccessException("You are not authorized to issue a refund for this Payment.");
+        if (currentUserRole == "doctor" && payment.doctor_id != currentUserId)
+            throw new UnauthorizedAccessException("You are not authorized to issue a refund for this payment.");
 
         // 3. Process Gateway Refund
         decimal refundAmount = request.Amount ?? payment.amount;
@@ -339,14 +339,14 @@ public class PaymentService : IPaymentService
             }
         }
 
-        // 4. Update Payment status
+        // 4. Update payment status
         payment.status = "refunded";
         payment.refunded_amount = refundAmount;
-        payment.refund_reason = string.IsNullOrWhiteSpace(request.RefundReason) ? "Cancelled by User" : request.RefundReason;
+        payment.refund_reason = string.IsNullOrWhiteSpace(request.RefundReason) ? "Cancelled by user" : request.RefundReason;
         payment.refunded_at = DateTime.UtcNow;
         payment.updated_at = DateTime.UtcNow;
 
-        // 5. Update Booking Status
+        // 5. Update booking Status
         if (payment.booking != null)
         {
             payment.booking.status = "cancelled";
@@ -386,15 +386,15 @@ public class PaymentService : IPaymentService
             .AsQueryable();
 
         // 1. Role Filtering
-        if (currentUserRole == "User")
+        if (currentUserRole == "user")
         {
             dbQuery = dbQuery.Where(p => p.user_id == currentUserId);
         }
-        else if (currentUserRole == "Doctor")
+        else if (currentUserRole == "doctor")
         {
             dbQuery = dbQuery.Where(p => p.doctor_id == currentUserId);
         }
-        else if (currentUserRole == "Admin")
+        else if (currentUserRole == "admin")
         {
             // Admins can see everything
         }
@@ -424,7 +424,7 @@ public class PaymentService : IPaymentService
                 PatientId = p.user_id,
                 PatientName = p.user != null ? p.user.full_name : "Unknown Patient",
                 DoctorId = p.doctor_id,
-                DoctorName = p.doctor != null ? p.doctor.full_name : "Unknown Doctor",
+                DoctorName = p.doctor != null ? p.doctor.full_name : "Unknown doctor",
                 Amount = p.amount,
                 Currency = p.currency,
                 Status = p.status,

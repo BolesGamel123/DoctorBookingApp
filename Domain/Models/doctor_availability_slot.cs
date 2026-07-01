@@ -43,12 +43,12 @@ public partial class doctor_availability_slot
 
     [ForeignKey("booking_id")]
     [InverseProperty("doctor_availability_slots")]
-    public virtual Booking booking { get; set; }
+    public virtual booking booking { get; set; }
 
     [InverseProperty("availability_slot")]
-    public virtual ICollection<Booking> bookings { get; set; } = new List<Booking>();
+    public virtual ICollection<booking> bookings { get; set; } = new List<booking>();
 
     [ForeignKey("doctor_id")]
     [InverseProperty("doctor_availability_slots")]
-    public virtual Doctor doctor { get; set; }
+    public virtual doctor doctor { get; set; }
 }

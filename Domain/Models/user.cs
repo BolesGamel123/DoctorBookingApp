@@ -11,7 +11,7 @@ namespace Domain.Models;
 [Index("is_active", "is_banned", Name = "IX_users_status")]
 [Index("email", Name = "UQ_users_email", IsUnique = true)]
 [Index("mobile_number", Name = "UQ_users_mobile", IsUnique = true)]
-public partial class User
+public partial class user
 {
     [Key]
     public long id { get; set; }
@@ -70,21 +70,21 @@ public partial class User
 
     public DateTime? refresh_token_expiry { get; set; }
 
-    [InverseProperty("User")]
-    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    [InverseProperty("user")]
+    public virtual ICollection<booking> Bookings { get; set; } = new List<booking>();
 
-    [InverseProperty("User")]
+    [InverseProperty("user")]
     public virtual ICollection<chat_conversation> Chat_conversations { get; set; } = new List<chat_conversation>();
 
-    [InverseProperty("User")]
+    [InverseProperty("user")]
     public virtual ICollection<favorite> Favorites { get; set; } = new List<favorite>();
 
-    [InverseProperty("User")]
-    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    [InverseProperty("user")]
+    public virtual ICollection<payment> Payments { get; set; } = new List<payment>();
 
-    [InverseProperty("User")]
+    [InverseProperty("user")]
     public virtual ICollection<review> Reviews { get; set; } = new List<review>();
 
-    [InverseProperty("User")]
+    [InverseProperty("user")]
     public virtual ICollection<search_history> Search_histories { get; set; } = new List<search_history>();
 }

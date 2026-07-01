@@ -23,9 +23,9 @@ public partial class favorite
 
     [ForeignKey("doctor_id")]
     [InverseProperty("Favorites")]
-    public virtual Doctor doctor { get; set; }
+    public virtual doctor doctor { get; set; }
 
     [ForeignKey("user_id")]
     [InverseProperty("Favorites")]
-    public virtual User user { get; set; }
+    public virtual user user { get; set; }
 }

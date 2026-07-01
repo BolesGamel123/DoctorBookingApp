@@ -14,7 +14,7 @@ namespace Domain.Models;
 [Index("email", Name = "UQ_doctors_email", IsUnique = true)]
 [Index("license_number", Name = "UQ_doctors_license", IsUnique = true)]
 [Index("mobile_number", Name = "UQ_doctors_mobile", IsUnique = true)]
-public partial class Doctor
+public partial class doctor
 {
     [Key]
     public long id { get; set; }
@@ -99,31 +99,31 @@ public partial class Doctor
 
     [ForeignKey("admin_id")]
     [InverseProperty("doctors")]
-    public virtual Admin admin { get; set; }
+    public virtual admin admin { get; set; }
 
-    [InverseProperty("Doctor")]
-    public virtual ICollection<Booking> bookings { get; set; } = new List<Booking>();
+    [InverseProperty("doctor")]
+    public virtual ICollection<booking> bookings { get; set; } = new List<booking>();
 
-    [InverseProperty("Doctor")]
+    [InverseProperty("doctor")]
     public virtual ICollection<chat_conversation> chat_conversations { get; set; } = new List<chat_conversation>();
 
     [ForeignKey("clinic_id")]
     [InverseProperty("doctors")]
     public virtual clinic clinic { get; set; }
 
-    [InverseProperty("Doctor")]
+    [InverseProperty("doctor")]
     public virtual ICollection<doctor_availability_slot> doctor_availability_slots { get; set; } = new List<doctor_availability_slot>();
 
-    [InverseProperty("Doctor")]
+    [InverseProperty("doctor")]
     public virtual ICollection<favorite> favorites { get; set; } = new List<favorite>();
 
-    [InverseProperty("Doctor")]
-    public virtual ICollection<Payment> payments { get; set; } = new List<Payment>();
+    [InverseProperty("doctor")]
+    public virtual ICollection<payment> payments { get; set; } = new List<payment>();
 
-    [InverseProperty("Doctor")]
+    [InverseProperty("doctor")]
     public virtual ICollection<review_response> review_responses { get; set; } = new List<review_response>();
 
-    [InverseProperty("Doctor")]
+    [InverseProperty("doctor")]
     public virtual ICollection<review> reviews { get; set; } = new List<review>();
 
     [ForeignKey("specialty_id")]

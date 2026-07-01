@@ -34,8 +34,8 @@ public class AuthService : IAuthService
         if (await _context.users.AnyAsync(u => u.mobile_number == request.MobileNumber && u.deleted_at == null))
             return AuthResult.Failure("Mobile number is already registered.");
 
-        // Create User
-        var newUser = new User
+        // Create user
+        var newUser = new user
         {
             full_name = request.FullName,
             email = request.Email,
@@ -52,7 +52,7 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync();
 
         // Generate tokens
-        var roles = new List<string> { "User" };
+        var roles = new List<string> { "user" };
         var accessToken = _tokenService.GenerateAccessToken(newUser.id, newUser.email, newUser.full_name, roles);
         var refreshToken = _tokenService.GenerateRefreshToken();
 
@@ -83,7 +83,7 @@ public class AuthService : IAuthService
             return AuthResult.Failure("Your account is not active.");
 
         // Generate tokens
-        var roles = new List<string> { "User" };
+        var roles = new List<string> { "user" };
         var accessToken = _tokenService.GenerateAccessToken(existingUser.id, existingUser.email, existingUser.full_name, roles);
         var refreshToken = _tokenService.GenerateRefreshToken();
 
@@ -106,7 +106,7 @@ public class AuthService : IAuthService
             return AuthResult.Failure("Invalid or expired refresh token.");
 
         // Rotate tokens
-        var roles = new List<string> { "User" };
+        var roles = new List<string> { "user" };
         var newAccessToken = _tokenService.GenerateAccessToken(existingUser.id, existingUser.email, existingUser.full_name, roles);
         var newRefreshToken = _tokenService.GenerateRefreshToken();
 
@@ -133,7 +133,7 @@ public class AuthService : IAuthService
 
     // ── Helper ─────────────────────────────────────────────
 
-    private static UserDto MapToDto(User u) => new()
+    private static UserDto MapToDto(user u) => new()
     {
         Id = u.id,
         FullName = u.full_name,

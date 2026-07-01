@@ -19,7 +19,7 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Register a new User account.
+    /// Register a new user account.
     /// </summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
@@ -71,7 +71,7 @@ public class AuthController : ControllerBase
         var revoked = await _authService.RevokeTokenAsync(userId);
 
         if (!revoked)
-            return NotFound(ApiResponse<string>.Fail("User not found."));
+            return NotFound(ApiResponse<string>.Fail("user not found."));
 
         return Ok(ApiResponse<string>.Ok("Refresh token revoked.", "Logged out successfully."));
     }

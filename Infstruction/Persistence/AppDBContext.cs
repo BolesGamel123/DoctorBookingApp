@@ -17,11 +17,11 @@ public partial class AppDBContext : DbContext
     {
     }
 
-    public virtual DbSet<Admin> admins { get; set; }
+    public virtual DbSet<admin> admins { get; set; }
 
-    public virtual DbSet<Announcement> announcements { get; set; }
+    public virtual DbSet<announcement> announcements { get; set; }
 
-    public virtual DbSet<Booking> bookings { get; set; }
+    public virtual DbSet<booking> bookings { get; set; }
 
     public virtual DbSet<chat_conversation> chat_conversations { get; set; }
 
@@ -29,7 +29,7 @@ public partial class AppDBContext : DbContext
 
     public virtual DbSet<clinic> clinics { get; set; }
 
-    public virtual DbSet<Doctor> doctors { get; set; }
+    public virtual DbSet<doctor> doctors { get; set; }
 
     public virtual DbSet<doctor_availability_slot> doctor_availability_slots { get; set; }
 
@@ -41,7 +41,7 @@ public partial class AppDBContext : DbContext
 
     public virtual DbSet<notification_preference> notification_preferences { get; set; }
 
-    public virtual DbSet<Payment> payments { get; set; }
+    public virtual DbSet<payment> payments { get; set; }
 
     public virtual DbSet<review> reviews { get; set; }
 
@@ -53,7 +53,7 @@ public partial class AppDBContext : DbContext
 
     public virtual DbSet<system_log> system_logs { get; set; }
 
-    public virtual DbSet<User> users { get; set; }
+    public virtual DbSet<user> users { get; set; }
 
 //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -61,16 +61,16 @@ public partial class AppDBContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Admin>(entity =>
+        modelBuilder.Entity<admin>(entity =>
         {
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.is_active).HasDefaultValue(true);
-            entity.Property(e => e.role).HasDefaultValue("Admin");
+            entity.Property(e => e.role).HasDefaultValue("admin");
             entity.Property(e => e.two_factor_enabled).HasDefaultValue(true);
             entity.Property(e => e.updated_at).HasDefaultValueSql("(sysutcdatetime())");
         });
 
-        modelBuilder.Entity<Announcement>(entity =>
+        modelBuilder.Entity<announcement>(entity =>
         {
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.is_active).HasDefaultValue(true);
@@ -82,7 +82,7 @@ public partial class AppDBContext : DbContext
                 .HasConstraintName("FK_ann_admin");
         });
 
-        modelBuilder.Entity<Booking>(entity =>
+        modelBuilder.Entity<booking>(entity =>
         {
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.currency).HasDefaultValue("USD");
@@ -155,7 +155,7 @@ public partial class AppDBContext : DbContext
                 .HasConstraintName("FK_clinics_admin");
         });
 
-        modelBuilder.Entity<Doctor>(entity =>
+        modelBuilder.Entity<doctor>(entity =>
         {
             entity.HasIndex(e => new { e.clinic_latitude, e.clinic_longitude }, "IX_doctors_clinic_loc").HasFilter("([clinic_latitude] IS NOT NULL)");
 
@@ -244,7 +244,7 @@ public partial class AppDBContext : DbContext
             entity.Property(e => e.updated_at).HasDefaultValueSql("(sysutcdatetime())");
         });
 
-        modelBuilder.Entity<Payment>(entity =>
+        modelBuilder.Entity<payment>(entity =>
         {
             entity.HasIndex(e => e.gateway_transaction_id, "IX_payments_txn").HasFilter("([gateway_transaction_id] IS NOT NULL)");
 
@@ -321,7 +321,7 @@ public partial class AppDBContext : DbContext
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysutcdatetime())");
         });
 
-        modelBuilder.Entity<User>(entity =>
+        modelBuilder.Entity<user>(entity =>
         {
             entity.HasIndex(e => new { e.latitude, e.longitude }, "IX_users_location").HasFilter("([latitude] IS NOT NULL AND [longitude] IS NOT NULL)");
 

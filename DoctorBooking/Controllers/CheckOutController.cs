@@ -58,7 +58,7 @@ public class CheckOutController : ControllerBase
         {
             var userId = GetCurrentUserId();
             var result = await _paymentService.ConfirmPaymentAsync(request, userId);
-            return Ok(ApiResponse<PaymentConfirmResultDto>.Ok(result, "Payment confirmed and Booking updated successfully."));
+            return Ok(ApiResponse<PaymentConfirmResultDto>.Ok(result, "payment confirmed and booking updated successfully."));
         }
         catch (ArgumentException ex)
         {
@@ -79,7 +79,7 @@ public class CheckOutController : ControllerBase
     }
 
     /// <summary>
-    /// Process a refund for a Payment.
+    /// Process a refund for a payment.
     /// </summary>
     [HttpPost("refund")]
     public async Task<IActionResult> RefundPayment([FromBody] RefundRequestDto request)
@@ -110,7 +110,7 @@ public class CheckOutController : ControllerBase
     }
 
     /// <summary>
-    /// Get the history of Payments (paginated and filtered based on User role).
+    /// Get the history of Payments (paginated and filtered based on user role).
     /// </summary>
     [HttpGet("history")]
     public async Task<IActionResult> GetPaymentHistory([FromQuery] PaymentHistoryQueryDto query)
@@ -120,7 +120,7 @@ public class CheckOutController : ControllerBase
             var userId = GetCurrentUserId();
             var userRole = GetCurrentUserRole();
             var result = await _paymentService.GetPaymentHistoryAsync(query, userId, userRole);
-            return Ok(ApiResponse<PagedResultDto<PaymentHistoryDto>>.Ok(result, "Payment history retrieved successfully."));
+            return Ok(ApiResponse<PagedResultDto<PaymentHistoryDto>>.Ok(result, "payment history retrieved successfully."));
         }
         catch (Exception ex)
         {
@@ -164,6 +164,6 @@ public class CheckOutController : ControllerBase
 
     private string GetCurrentUserRole()
     {
-        return User.FindFirstValue(ClaimTypes.Role) ?? "User";
+        return User.FindFirstValue(ClaimTypes.Role) ?? "user";
     }
 }
