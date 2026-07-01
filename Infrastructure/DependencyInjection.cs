@@ -64,6 +64,15 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddHttpContextAccessor();
 
+        // ── Stripe ───────────────────────────────────────────
+        services.Configure<StripeSettings>(
+            configuration.GetSection(StripeSettings.SectionName));
+        services.AddScoped<IStripeService, StripeService>();
+
+        // StripePublicSettings gives Application layer access to the publishable key only
+        services.Configure<Application.Common.Models.StripePublicSettings>(
+            configuration.GetSection(Application.Common.Models.StripePublicSettings.SectionName));
+
         return services;
     }
 }
