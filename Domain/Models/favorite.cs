@@ -15,7 +15,7 @@ public partial class favorite
     [Key]
     public long id { get; set; }
 
-    public long user_id { get; set; }
+    public long user_id { get; set; } //. Patient_Id 
 
     public long doctor_id { get; set; }
 

@@ -7,6 +7,7 @@ using Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Application.Prfiles;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddAutoMapper(typeof(FavoriteDoctorProfile).Assembly); 
+builder.Services.AddHttpContextAccessor();
 
 // ── Services ─────────────────────────────────────────────────
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -63,6 +66,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
 

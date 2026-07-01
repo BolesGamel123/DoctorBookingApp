@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 
 namespace Domain.Models;
 
@@ -96,6 +97,7 @@ public partial class doctor
     public DateTime updated_at { get; set; }
 
     public DateTime? deleted_at { get; set; }
+   
 
     [ForeignKey("admin_id")]
     [InverseProperty("doctors")]
