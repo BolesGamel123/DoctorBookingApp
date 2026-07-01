@@ -37,9 +37,9 @@ public partial class faq
 
     [ForeignKey("created_by")]
     [InverseProperty("faqcreated_byNavigations")]
-    public virtual admin created_byNavigation { get; set; }
+    public virtual Admin created_byNavigation { get; set; }
 
     [ForeignKey("updated_by")]
     [InverseProperty("faqupdated_byNavigations")]
-    public virtual admin updated_byNavigation { get; set; }
+    public virtual Admin updated_byNavigation { get; set; }
 }

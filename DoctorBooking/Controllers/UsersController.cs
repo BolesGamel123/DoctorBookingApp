@@ -21,7 +21,7 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get current authenticated user's profile.
+    /// Get current authenticated User's profile.
     /// </summary>
     [HttpGet("me")]
     public async Task<IActionResult> GetMe()
@@ -37,7 +37,7 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Update current authenticated user's profile.
+    /// Update current authenticated User's profile.
     /// </summary>
     [HttpPut("me")]
     public async Task<IActionResult> UpdateMe([FromBody] UpdateUserRequest request)
@@ -64,7 +64,7 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get all users (admin only, paginated).
+    /// Get all users (Admin only, paginated).
     /// </summary>
     [HttpGet]
     [Authorize(Roles = "Admin")]
@@ -85,7 +85,7 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get a user by ID (admin only).
+    /// Get a User by ID (Admin only).
     /// </summary>
     [HttpGet("{id}")]
     [Authorize(Roles = "Admin")]
@@ -101,7 +101,7 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Soft-delete a user (admin only).
+    /// Soft-delete a User (Admin only).
     /// </summary>
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
@@ -129,7 +129,7 @@ public class UsersController : ControllerBase
         return long.Parse(sub!);
     }
 
-    private static UserDto MapToDto(user u) => new()
+    private static UserDto MapToDto(User u) => new()
     {
         Id = u.id,
         FullName = u.full_name,

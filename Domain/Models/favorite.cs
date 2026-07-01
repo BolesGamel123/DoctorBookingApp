@@ -22,10 +22,10 @@ public partial class favorite
     public DateTime created_at { get; set; }
 
     [ForeignKey("doctor_id")]
-    [InverseProperty("favorites")]
-    public virtual doctor doctor { get; set; }
+    [InverseProperty("Favorites")]
+    public virtual Doctor doctor { get; set; }
 
     [ForeignKey("user_id")]
-    [InverseProperty("favorites")]
-    public virtual user user { get; set; }
+    [InverseProperty("Favorites")]
+    public virtual User user { get; set; }
 }

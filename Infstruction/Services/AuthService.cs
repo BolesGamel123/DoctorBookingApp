@@ -34,8 +34,8 @@ public class AuthService : IAuthService
         if (await _context.users.AnyAsync(u => u.mobile_number == request.MobileNumber && u.deleted_at == null))
             return AuthResult.Failure("Mobile number is already registered.");
 
-        // Create user
-        var newUser = new user
+        // Create User
+        var newUser = new User
         {
             full_name = request.FullName,
             email = request.Email,
@@ -133,7 +133,7 @@ public class AuthService : IAuthService
 
     // ── Helper ─────────────────────────────────────────────
 
-    private static UserDto MapToDto(user u) => new()
+    private static UserDto MapToDto(User u) => new()
     {
         Id = u.id,
         FullName = u.full_name,

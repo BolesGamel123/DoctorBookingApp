@@ -27,6 +27,6 @@ public partial class search_history
     public DateTime created_at { get; set; }
 
     [ForeignKey("user_id")]
-    [InverseProperty("search_histories")]
-    public virtual user user { get; set; }
+    [InverseProperty("Search_histories")]
+    public virtual User user { get; set; }
 }

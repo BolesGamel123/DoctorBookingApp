@@ -62,12 +62,12 @@ public partial class clinic
     public DateTime updated_at { get; set; }
 
     [InverseProperty("clinic")]
-    public virtual ICollection<booking> bookings { get; set; } = new List<booking>();
+    public virtual ICollection<Booking> bookings { get; set; } = new List<Booking>();
 
     [ForeignKey("created_by")]
     [InverseProperty("clinics")]
-    public virtual admin created_byNavigation { get; set; }
+    public virtual Admin created_byNavigation { get; set; }
 
     [InverseProperty("clinic")]
-    public virtual ICollection<doctor> doctors { get; set; } = new List<doctor>();
+    public virtual ICollection<Doctor> doctors { get; set; } = new List<Doctor>();
 }

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Domain.Models;
 
 [Index("email", Name = "UQ_admins_email", IsUnique = true)]
-public partial class admin
+public partial class Admin
 {
     [Key]
     public long id { get; set; }
@@ -46,14 +46,14 @@ public partial class admin
 
     public DateTime updated_at { get; set; }
 
-    [InverseProperty("admin")]
-    public virtual ICollection<announcement> announcements { get; set; } = new List<announcement>();
+    [InverseProperty("Admin")]
+    public virtual ICollection<Announcement> announcements { get; set; } = new List<Announcement>();
 
     [InverseProperty("created_byNavigation")]
     public virtual ICollection<clinic> clinics { get; set; } = new List<clinic>();
 
-    [InverseProperty("admin")]
-    public virtual ICollection<doctor> doctors { get; set; } = new List<doctor>();
+    [InverseProperty("Admin")]
+    public virtual ICollection<Doctor> doctors { get; set; } = new List<Doctor>();
 
     [InverseProperty("created_byNavigation")]
     public virtual ICollection<faq> faqcreated_byNavigations { get; set; } = new List<faq>();

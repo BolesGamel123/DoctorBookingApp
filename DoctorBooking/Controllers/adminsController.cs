@@ -20,14 +20,14 @@ namespace DoctorBooking.Controllers
 
         // GET: api/admins
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<admin>>> Getadmins()
+        public async Task<ActionResult<IEnumerable<Admin>>> Getadmins()
         {
             return await _context.admins.ToListAsync();
         }
 
         // GET: api/admins/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<admin>> Getadmin(long id)
+        public async Task<ActionResult<Admin>> Getadmin(long id)
         {
             var admin = await _context.admins.FindAsync(id);
 
@@ -41,7 +41,7 @@ namespace DoctorBooking.Controllers
 
         // PUT: api/admins/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> Putadmin(long id, admin admin)
+        public async Task<IActionResult> Putadmin(long id, Admin admin)
         {
             if (id != admin.id)
             {
@@ -71,7 +71,7 @@ namespace DoctorBooking.Controllers
 
         // POST: api/admins
         [HttpPost]
-        public async Task<ActionResult<admin>> Postadmin(admin admin)
+        public async Task<ActionResult<Admin>> Postadmin(Admin admin)
         {
             _context.admins.Add(admin);
             await _context.SaveChangesAsync();

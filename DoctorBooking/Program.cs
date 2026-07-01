@@ -6,6 +6,7 @@ using Infrastructure.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,8 +40,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // ── Services ────────────────────────────────────────────────
-builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ITokenService, Infrastructure.Services.TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.Configure<StripeSettings>(
+    builder.Configuration.GetSection("StripePayment"));
 
 // ── CORS ────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
@@ -62,6 +66,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+var stripeSecKey = builder.Configuration["StripePayment:SecretKey"] ?? "";
+var stripePubKey = builder.Configuration["StripePayment:Publishablekey"] ?? "";
+StripeConfiguration.ApiKey = stripeSecKey.StartsWith("sk_") ? stripeSecKey : stripePubKey;
 app.UseAuthentication();
 app.UseAuthorization();
 

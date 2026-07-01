@@ -17,11 +17,11 @@ public partial class AppDBContext : DbContext
     {
     }
 
-    public virtual DbSet<admin> admins { get; set; }
+    public virtual DbSet<Admin> admins { get; set; }
 
-    public virtual DbSet<announcement> announcements { get; set; }
+    public virtual DbSet<Announcement> announcements { get; set; }
 
-    public virtual DbSet<booking> bookings { get; set; }
+    public virtual DbSet<Booking> bookings { get; set; }
 
     public virtual DbSet<chat_conversation> chat_conversations { get; set; }
 
@@ -29,7 +29,7 @@ public partial class AppDBContext : DbContext
 
     public virtual DbSet<clinic> clinics { get; set; }
 
-    public virtual DbSet<doctor> doctors { get; set; }
+    public virtual DbSet<Doctor> doctors { get; set; }
 
     public virtual DbSet<doctor_availability_slot> doctor_availability_slots { get; set; }
 
@@ -41,7 +41,7 @@ public partial class AppDBContext : DbContext
 
     public virtual DbSet<notification_preference> notification_preferences { get; set; }
 
-    public virtual DbSet<payment> payments { get; set; }
+    public virtual DbSet<Payment> payments { get; set; }
 
     public virtual DbSet<review> reviews { get; set; }
 
@@ -53,7 +53,7 @@ public partial class AppDBContext : DbContext
 
     public virtual DbSet<system_log> system_logs { get; set; }
 
-    public virtual DbSet<user> users { get; set; }
+    public virtual DbSet<User> users { get; set; }
 
 //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -61,16 +61,16 @@ public partial class AppDBContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<admin>(entity =>
+        modelBuilder.Entity<Admin>(entity =>
         {
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.is_active).HasDefaultValue(true);
-            entity.Property(e => e.role).HasDefaultValue("admin");
+            entity.Property(e => e.role).HasDefaultValue("Admin");
             entity.Property(e => e.two_factor_enabled).HasDefaultValue(true);
             entity.Property(e => e.updated_at).HasDefaultValueSql("(sysutcdatetime())");
         });
 
-        modelBuilder.Entity<announcement>(entity =>
+        modelBuilder.Entity<Announcement>(entity =>
         {
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.is_active).HasDefaultValue(true);
@@ -82,7 +82,7 @@ public partial class AppDBContext : DbContext
                 .HasConstraintName("FK_ann_admin");
         });
 
-        modelBuilder.Entity<booking>(entity =>
+        modelBuilder.Entity<Booking>(entity =>
         {
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.currency).HasDefaultValue("USD");
@@ -107,7 +107,7 @@ public partial class AppDBContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_bookings_specialty");
 
-            entity.HasOne(d => d.user).WithMany(p => p.bookings)
+            entity.HasOne(d => d.user).WithMany(p => p.Bookings)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_bookings_user");
         });
@@ -125,7 +125,7 @@ public partial class AppDBContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_cc_last_message");
 
-            entity.HasOne(d => d.user).WithMany(p => p.chat_conversations)
+            entity.HasOne(d => d.user).WithMany(p => p.Chat_conversations)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_cc_user");
         });
@@ -155,7 +155,7 @@ public partial class AppDBContext : DbContext
                 .HasConstraintName("FK_clinics_admin");
         });
 
-        modelBuilder.Entity<doctor>(entity =>
+        modelBuilder.Entity<Doctor>(entity =>
         {
             entity.HasIndex(e => new { e.clinic_latitude, e.clinic_longitude }, "IX_doctors_clinic_loc").HasFilter("([clinic_latitude] IS NOT NULL)");
 
@@ -218,7 +218,7 @@ public partial class AppDBContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_favorites_doctor");
 
-            entity.HasOne(d => d.user).WithMany(p => p.favorites)
+            entity.HasOne(d => d.user).WithMany(p => p.Favorites)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_favorites_user");
         });
@@ -244,7 +244,7 @@ public partial class AppDBContext : DbContext
             entity.Property(e => e.updated_at).HasDefaultValueSql("(sysutcdatetime())");
         });
 
-        modelBuilder.Entity<payment>(entity =>
+        modelBuilder.Entity<Payment>(entity =>
         {
             entity.HasIndex(e => e.gateway_transaction_id, "IX_payments_txn").HasFilter("([gateway_transaction_id] IS NOT NULL)");
 
@@ -261,7 +261,7 @@ public partial class AppDBContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_payments_doctor");
 
-            entity.HasOne(d => d.user).WithMany(p => p.payments)
+            entity.HasOne(d => d.user).WithMany(p => p.Payments)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_payments_user");
         });
@@ -280,7 +280,7 @@ public partial class AppDBContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_reviews_doctor");
 
-            entity.HasOne(d => d.user).WithMany(p => p.reviews)
+            entity.HasOne(d => d.user).WithMany(p => p.Reviews)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_reviews_user");
         });
@@ -304,7 +304,7 @@ public partial class AppDBContext : DbContext
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysutcdatetime())");
             entity.Property(e => e.search_type).HasDefaultValue("general");
 
-            entity.HasOne(d => d.user).WithMany(p => p.search_histories)
+            entity.HasOne(d => d.user).WithMany(p => p.Search_histories)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_sh_user");
         });
@@ -321,7 +321,7 @@ public partial class AppDBContext : DbContext
             entity.Property(e => e.created_at).HasDefaultValueSql("(sysutcdatetime())");
         });
 
-        modelBuilder.Entity<user>(entity =>
+        modelBuilder.Entity<User>(entity =>
         {
             entity.HasIndex(e => new { e.latitude, e.longitude }, "IX_users_location").HasFilter("([latitude] IS NOT NULL AND [longitude] IS NOT NULL)");
 

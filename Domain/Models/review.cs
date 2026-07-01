@@ -42,16 +42,16 @@ public partial class review
 
     [ForeignKey("booking_id")]
     [InverseProperty("review")]
-    public virtual booking booking { get; set; }
+    public virtual Booking booking { get; set; }
 
     [ForeignKey("doctor_id")]
-    [InverseProperty("reviews")]
-    public virtual doctor doctor { get; set; }
+    [InverseProperty("Reviews")]
+    public virtual Doctor doctor { get; set; }
 
     [InverseProperty("review")]
     public virtual review_response review_response { get; set; }
 
     [ForeignKey("user_id")]
-    [InverseProperty("reviews")]
-    public virtual user user { get; set; }
+    [InverseProperty("Reviews")]
+    public virtual User user { get; set; }
 }

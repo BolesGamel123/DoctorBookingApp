@@ -39,8 +39,8 @@ public partial class specialty
     public DateTime updated_at { get; set; }
 
     [InverseProperty("specialty")]
-    public virtual ICollection<booking> bookings { get; set; } = new List<booking>();
+    public virtual ICollection<Booking> bookings { get; set; } = new List<Booking>();
 
     [InverseProperty("specialty")]
-    public virtual ICollection<doctor> doctors { get; set; } = new List<doctor>();
+    public virtual ICollection<Doctor> doctors { get; set; } = new List<Doctor>();
 }

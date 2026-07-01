@@ -28,7 +28,7 @@ public partial class review_response
 
     [ForeignKey("doctor_id")]
     [InverseProperty("review_responses")]
-    public virtual doctor doctor { get; set; }
+    public virtual Doctor doctor { get; set; }
 
     [ForeignKey("review_id")]
     [InverseProperty("review_response")]

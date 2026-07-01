@@ -48,14 +48,14 @@ public partial class chat_conversation
     public virtual ICollection<chat_message> chat_messages { get; set; } = new List<chat_message>();
 
     [ForeignKey("doctor_id")]
-    [InverseProperty("chat_conversations")]
-    public virtual doctor doctor { get; set; }
+    [InverseProperty("Chat_conversations")]
+    public virtual Doctor doctor { get; set; }
 
     [ForeignKey("last_message_id")]
-    [InverseProperty("chat_conversations")]
+    [InverseProperty("Chat_conversations")]
     public virtual chat_message last_message { get; set; }
 
     [ForeignKey("user_id")]
-    [InverseProperty("chat_conversations")]
-    public virtual user user { get; set; }
+    [InverseProperty("Chat_conversations")]
+    public virtual User user { get; set; }
 }
