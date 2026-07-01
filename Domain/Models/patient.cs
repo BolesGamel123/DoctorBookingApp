@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities;
 
-[Table("users")]
+[Table("patient")]
 public partial class patient
 {
     [Key]
