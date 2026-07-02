@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Application.Prfiles;
+using Infrastructure.Repsoitory;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,7 +47,10 @@ builder.Services.AddHttpContextAccessor();
 // ── Services ─────────────────────────────────────────────────
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-
+builder.Services.AddScoped<ISystemLogRepository, SystemLogRepository>();>
+builder.Services.AddScoped<typeof(IGenericRepository), typeof(GenericRepository) > ();
+builder.Services.AddScoped<ISearchHistoryService, SearchHistoryService>();
+builder.Services.AddScoped<IDoctorFavoriteService, DoctorFavoriteService>();
 // ── CORS ──────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll", p =>
