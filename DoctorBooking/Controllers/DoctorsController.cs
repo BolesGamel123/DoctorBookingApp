@@ -1,7 +1,10 @@
-﻿using Application.Features.Doctors.Queries.GetNearbyDoctors;
+﻿using Application.Common.Interfaces;
+using Application.DTOs;
+using Application.Features.Doctors.Queries.GetNearbyDoctors;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Stripe;
 
 namespace DoctorBooking.Controllers;
 
@@ -11,10 +14,13 @@ namespace DoctorBooking.Controllers;
 public sealed class DoctorsController : ControllerBase
 {
     private readonly ISender _mediator;
+    private readonly ISearchHistoryService service;
 
-    public DoctorsController(ISender mediator)
+    public DoctorsController(ISender mediator,
+                             ISearchHistoryService service)
     {
         _mediator = mediator;
+        this.service = service;
     }
 
     /// <summary>
@@ -31,5 +37,17 @@ public sealed class DoctorsController : ControllerBase
             new GetNearbyDoctorsQuery(latitude, longitude, radiusKm, limit));
 
         return result.Success ? Ok(result) : BadRequest(result);
+    }
+
+
+    [HttpGet("search")]
+    [ProducesResponseType(typeof(GeneicResult<DoctorSearchResponseDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<GeneicResult<DoctorSearchResponseDTO>>> SearchDoctors([FromQuery] DoctorSearchDTO dto)
+    {
+        var result = await service.GetDoctor(dto);
+        if (!result.IsSuccess)
+            return BadRequest(result);
+        return Ok(result);
     }
 }
