@@ -29,43 +29,112 @@ public sealed class LoginCommandHandler
     }
 
     public async Task<ApiResponse<AuthResponse>> Handle(
-        LoginCommand request, CancellationToken cancellationToken)
+    LoginCommand request,
+    CancellationToken cancellationToken)
     {
         var patient = await _context.patients
-            .FirstOrDefaultAsync(u => u.email == request.Email && u.deleted_at == null, cancellationToken);
+            .FirstOrDefaultAsync(u =>
+                u.email == request.Email &&
+                u.deleted_at == null,
+                cancellationToken);
 
-        if (patient is null)
-            return ApiResponse<AuthResponse>.Fail("Login failed.", ["Invalid email or password."]);
-
-        if (!_passwordHasher.Verify(request.Password, patient.password))
-            return ApiResponse<AuthResponse>.Fail("Login failed.", ["Invalid email or password."]);
-
-        if (patient.is_banned)
-            return ApiResponse<AuthResponse>.Fail("Login failed.",
-                ["Your account has been suspended.", patient.ban_reason ?? "Contact support."]);
-
-        if (!patient.is_active)
-            return ApiResponse<AuthResponse>.Fail("Login failed.", ["Your account is not active."]);
-
-        var roles        = new List<string> { "Patient" };
-        var accessToken  = _tokenService.GenerateAccessToken(patient.id, patient.email, patient.full_name, roles);
-        var refreshToken = _tokenService.GenerateRefreshToken();
-
-        patient.refresh_token        = refreshToken;
-        patient.refresh_token_expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
-        patient.updated_at           = DateTime.UtcNow;
-        await _context.SaveChangesAsync(cancellationToken);
-
-        var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
-        var summary = new PatientSummary
+        if (patient is not null)
         {
-            Id = patient.id, FullName = patient.full_name, Email = patient.email,
-            MobileNumber = patient.mobile_number, ProfilePhotoUrl = patient.profile_photo_url,
-            Birthdate = patient.birthdate, IsActive = patient.is_active, CreatedAt = patient.created_at
-        };
+            if (!_passwordHasher.Verify(request.Password, patient.password))
+                return ApiResponse<AuthResponse>.Fail("Login failed.", ["Invalid email or password."]);
 
-        return ApiResponse<AuthResponse>.Ok(
-            AuthResponse.Success(accessToken, refreshToken, expiresAt, summary),
-            "Login successful.");
+            if (patient.is_banned)
+                return ApiResponse<AuthResponse>.Fail("Login failed.",
+                    ["Your account has been suspended.", patient.ban_reason ?? "Contact support."]);
+
+            if (!patient.is_active)
+                return ApiResponse<AuthResponse>.Fail("Login failed.", ["Your account is not active."]);
+
+            var roles = new List<string> { "Patient" };
+
+            var accessToken = _tokenService.GenerateAccessToken(
+                patient.id,
+                patient.email,
+                patient.full_name,
+                roles);
+
+            var refreshToken = _tokenService.GenerateRefreshToken();
+
+            patient.refresh_token = refreshToken;
+            patient.refresh_token_expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+            patient.updated_at = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
+
+            var summary = new PatientSummary
+            {
+                Id = patient.id,
+                FullName = patient.full_name,
+                Email = patient.email,
+                MobileNumber = patient.mobile_number,
+                ProfilePhotoUrl = patient.profile_photo_url,
+                Birthdate = patient.birthdate,
+                IsActive = patient.is_active,
+                CreatedAt = patient.created_at
+            };
+
+            return ApiResponse<AuthResponse>.Ok(
+                AuthResponse.Success(accessToken, refreshToken, expiresAt, summary),
+                "Login successful.");
+        }
+
+        var doctor = await _context.doctors
+            .FirstOrDefaultAsync(u =>
+                u.email == request.Email &&
+                u.deleted_at == null,
+                cancellationToken);
+
+        if (doctor is not null)
+        {
+            if (!_passwordHasher.Verify(request.Password, doctor.password))
+                return ApiResponse<AuthResponse>.Fail("Login failed.", ["Invalid email or password."]);
+
+            if (doctor.is_banned)
+                return ApiResponse<AuthResponse>.Fail("Login failed.", ["Your account has been suspended."]);
+
+            if (!doctor.is_active)
+                return ApiResponse<AuthResponse>.Fail("Login failed.", ["Your account is not active."]);
+
+            var roles = new List<string> { "Doctor" };
+
+            var accessToken = _tokenService.GenerateAccessToken(
+                doctor.id,
+                doctor.email,
+                doctor.full_name,
+                roles);
+
+            var refreshToken = _tokenService.GenerateRefreshToken();
+
+            doctor.updated_at = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
+
+            var summary = new PatientSummary
+            {
+                Id = doctor.id,
+                FullName = doctor.full_name,
+                Email = doctor.email,
+                MobileNumber = doctor.mobile_number,
+                ProfilePhotoUrl = doctor.profile_photo_url,
+                Birthdate = null,
+                IsActive = doctor.is_active,
+                CreatedAt = doctor.created_at
+            };
+
+            return ApiResponse<AuthResponse>.Ok(
+                AuthResponse.Success(accessToken, refreshToken, expiresAt, summary),
+                "Login successful.");
+        }
+
+        return ApiResponse<AuthResponse>.Fail("Login failed.", ["Invalid email or password."]);
     }
 }

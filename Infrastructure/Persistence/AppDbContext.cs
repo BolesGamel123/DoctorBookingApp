@@ -34,6 +34,20 @@ public partial class AppDbContext : DbContext, IApplicationDbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<chat_conversation>()
+            .HasOne(x => x.last_message)
+            .WithMany(x => x.chat_conversations)
+            .HasForeignKey(x => x.last_message_id)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<chat_message>()
+            .HasOne(x => x.reply_to_message)
+            .WithMany(x => x.Inversereply_to_message)
+            .HasForeignKey(x => x.reply_to_message_id)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // ── Admin ─────────────────────────────────────────────
         modelBuilder.Entity<admin>(entity =>
         {
