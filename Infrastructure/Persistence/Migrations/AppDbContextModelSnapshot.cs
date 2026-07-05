@@ -1038,7 +1038,7 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasIndex(new[] { "mobile_number" }, "UQ_users_mobile")
                         .IsUnique();
 
-                    b.ToTable("users");
+                    b.ToTable("patient");
                 });
 
             modelBuilder.Entity("Domain.Entities.payment", b =>

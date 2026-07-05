@@ -1,8 +1,11 @@
 using System.Text;
 using Application.Common.Interfaces;
 using Application.Features.Auth.Commands.Register;
+using Application.Profiles;
 using Infrastructure.Persistence;
+using Infrastructure.Repsoitory;
 using Infrastructure.Services;
+using Infrastructure.UnitOfWorks;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -80,6 +83,12 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddHttpContextAccessor();
+        services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+        services.AddScoped<IDoctorFavoriteService, Doctor_FavouriteService>();
+        services.AddScoped<ISearchHistoryService, SearchHistoryService>();
+        services.AddScoped<ISystemLogRepository, SystemLogRepository>();
+        services.AddScoped<IUnitOfWorks, Unit_Of_Work>();
+        services.AddAutoMapper(typeof(DoctorFavoriteProfile).Assembly);
 
         // ── Stripe ───────────────────────────────────────────
         services.Configure<StripeSettings>(
