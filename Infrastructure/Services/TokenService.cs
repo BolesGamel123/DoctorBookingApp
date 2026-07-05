@@ -14,27 +14,22 @@ public sealed class TokenService : ITokenService
     private readonly JwtSettingsOption _settings;
 
     public TokenService(IOptions<JwtSettingsOption> settings)
-    {
-        _settings = settings.Value;
-    }
+        => _settings = settings.Value;
 
     public string GenerateAccessToken(long userId, string email, string fullName, IList<string> roles)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new(JwtRegisteredClaimNames.Email, email),
             new(JwtRegisteredClaimNames.Name, fullName),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
+            new(ClaimTypes.NameIdentifier, userId.ToString())
         };
 
-        foreach (var role in roles)
-            claims.Add(new Claim(ClaimTypes.Role, role));
+        claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(
             issuer: _settings.Issuer,
             audience: _settings.Audience,
@@ -47,9 +42,7 @@ public sealed class TokenService : ITokenService
 
     public string GenerateRefreshToken()
     {
-        var randomBytes = new byte[64];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(randomBytes);
-        return Convert.ToBase64String(randomBytes);
+        var bytes = RandomNumberGenerator.GetBytes(64);
+        return Convert.ToBase64String(bytes);
     }
 }
