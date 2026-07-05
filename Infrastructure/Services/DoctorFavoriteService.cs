@@ -1,17 +1,11 @@
-﻿using Application.Common.Interfaces;
+using System.IdentityModel.Tokens.Jwt;
+using Application.Common.Interfaces;
 using Application.DTOs;
 using Application.Features;
 using AutoMapper;
 using Domain.Entities;
-using Domain.Entities;
 using Infrastructure.UnitOfWorks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
-using Microsoft.Identity.Client;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Infrastructure.Services
 {
@@ -38,7 +32,7 @@ namespace Infrastructure.Services
             try
             {
                 //. bringing the doctor_Id for the user (Patient) from the claims that existing in JWT or Token
-                if (long.TryParse(accessor.HttpContext.User.FindFirst("sub)")?.Value, out long result))
+                if (long.TryParse(accessor.HttpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out long result))
                 {
                     var favoriteDoctor = new favorite
                     {
@@ -89,7 +83,7 @@ namespace Infrastructure.Services
 
         public async Task<GeneicResult<PaginatedResult<FavoriteDoctorDTO>>> GetFavorites(int page, int pageSize)
         {
-            if (long.TryParse(accessor.HttpContext.User.FindFirst("sub)")?.Value, out long result))
+            if (long.TryParse(accessor.HttpContext.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value, out long result))
             {
                 var favoriteDoctors = await unitOfWork.favorite_repo.GetPaginationAsync(predicate: op => op.user_id == result,
                     selector: op => new FavoriteDoctorDTO

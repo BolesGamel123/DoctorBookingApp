@@ -87,6 +87,7 @@ public static class DependencyInjection
         services.AddScoped<IDoctorFavoriteService, Doctor_FavouriteService>();
         services.AddScoped<ISearchHistoryService, SearchHistoryService>();
         services.AddScoped<ISystemLogRepository, SystemLogRepository>();
+        services.AddScoped<ISystemLogService, SystemLogService>();
         services.AddScoped<IUnitOfWorks, Unit_Of_Work>();
         services.AddAutoMapper(typeof(DoctorFavoriteProfile).Assembly);
 

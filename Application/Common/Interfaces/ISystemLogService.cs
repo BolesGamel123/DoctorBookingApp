@@ -1,4 +1,4 @@
-﻿using Application.DTOs;
+using Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,7 +9,7 @@ namespace Application.Common.Interfaces
     {
         Task<GeneicResult<PaginatedResult<SystemLogResponseDTO>>> GetAllLogsAsync(SystemLogsRequestDTO requestDTO);
         Task<GeneicResult<SystemLogResponseDTO>> GetLogByIdAsync(long logId);
-        Task<GeneicResult<List<SystemLogResponseDTO>>> GetLogsByActorIdAsync(long actor_id);
+        Task<GeneicResult<PaginatedResult<SystemLogResponseDTO>>> GetLogsByActorIdAsync(long actor_id, int pageNumber, int pageSize);
         Task<GeneicResult<PaginatedResult<SystemLogResponseForSpecificTargetResponseDTO>>> GetSystemLogsForSpecificTargetAsync(SystemLogsRequestDTO requestDTO);
         Task<GeneicResult<CreateSystemLogResponseDTO>> CreateSystemLogAsync(CreateSystemLogRequestDTO dTO);
     }

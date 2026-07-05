@@ -1,4 +1,4 @@
-﻿using Application.Common.Interfaces;
+using Application.Common.Interfaces;
 using Application.Common.Models;
 using Application.Features.Doctors.DTOs;
 using MediatR;
@@ -43,28 +43,42 @@ public sealed class GetNearbyDoctorsQueryHandler
         var patientLat = (double)request.Latitude;
         var patientLng = (double)request.Longitude;
 
-        // Fetch doctors from the database with necessary filters and includes
+        // ── Bounding-box pre-filter ────────────────────────────────────────
+        // 1° of latitude ≈ 111 km. Longitude degree length shrinks with cos(lat).
+        // This lets the DB use an index on clinic_latitude / clinic_longitude and
+        // avoids loading the entire doctors table into memory.
+        var latDelta  = (decimal)(radiusKm / 111.0);
+        var lngDelta  = (decimal)(radiusKm / (111.0 * Math.Cos(patientLat * Math.PI / 180.0)));
+
+        var latMin = request.Latitude  - latDelta;
+        var latMax = request.Latitude  + latDelta;
+        var lngMin = request.Longitude - lngDelta;
+        var lngMax = request.Longitude + lngDelta;
+
+        // Note: .Include() is intentionally omitted — EF Core ignores eager-loads
+        // when the query is immediately projected via .Select(), so they only waste
+        // a round-trip. Navigation properties are accessed inline in the projection.
         var doctors = await _context.doctors
             .AsNoTracking()
-            .Include(d => d.specialty)
-            .Include(d => d.clinic)
             .Where(d =>
                 d.deleted_at == null &&
                 d.is_active &&
                 d.is_verified &&
                 !d.is_banned &&
-                d.clinic_latitude != null &&
-                d.clinic_longitude != null)
+                d.clinic_latitude  != null &&
+                d.clinic_longitude != null &&
+                d.clinic_latitude  >= latMin && d.clinic_latitude  <= latMax &&
+                d.clinic_longitude >= lngMin && d.clinic_longitude <= lngMax)
             .Select(d => new
             {
                 d.id,
                 d.full_name,
                 d.profile_photo_url,
                 d.specialty_id,
-                SpecialtyName = d.specialty.name,
+                SpecialtyName  = d.specialty != null ? d.specialty.name : null,
                 d.clinic_id,
-                ClinicName = d.clinic != null ? d.clinic.name : null,
-                ClinicAddress = d.clinic != null ? d.clinic.address : null,
+                ClinicName     = d.clinic != null ? d.clinic.name    : null,
+                ClinicAddress  = d.clinic != null ? d.clinic.address : null,
                 d.clinic_latitude,
                 d.clinic_longitude,
                 d.rating_avg,
@@ -74,38 +88,36 @@ public sealed class GetNearbyDoctorsQueryHandler
             })
             .ToListAsync(cancellationToken);
 
-        
+        // ── Exact Haversine filter in-memory (on the already-small candidate set) ──
         var nearbyDoctors = doctors
             .Select(d =>
             {
-                //Calculate Distance for each doctor from the patient's location    
                 var distanceKm = CalculateDistanceKm(
                     patientLat,
                     patientLng,
                     (double)d.clinic_latitude!.Value,
                     (double)d.clinic_longitude!.Value);
 
-                // Create a NearbyDoctorResponse object with the calculated distance
                 return new NearbyDoctorResponse
                 {
-                    Id = d.id,
-                    FullName = d.full_name,
+                    Id              = d.id,
+                    FullName        = d.full_name,
                     ProfilePhotoUrl = d.profile_photo_url,
-                    SpecialtyId = d.specialty_id,
-                    SpecialtyName = d.SpecialtyName,
-                    ClinicId = d.clinic_id,
-                    ClinicName = d.ClinicName,
-                    ClinicAddress = d.ClinicAddress,
-                    ClinicLatitude = d.clinic_latitude,
+                    SpecialtyId     = d.specialty_id,
+                    SpecialtyName   = d.SpecialtyName,
+                    ClinicId        = d.clinic_id,
+                    ClinicName      = d.ClinicName,
+                    ClinicAddress   = d.ClinicAddress,
+                    ClinicLatitude  = d.clinic_latitude,
                     ClinicLongitude = d.clinic_longitude,
-                    RatingAvg = d.rating_avg,
-                    RatingCount = d.rating_count,
-                    SessionPrice = d.session_price,
-                    Currency = d.currency,
-                    DistanceKm = Math.Round(distanceKm, 2)
+                    RatingAvg       = d.rating_avg,
+                    RatingCount     = d.rating_count,
+                    SessionPrice    = d.session_price,
+                    Currency        = d.currency,
+                    DistanceKm      = Math.Round(distanceKm, 2)
                 };
             })
-            .Where(d => d.DistanceKm <= radiusKm)
+            .Where(d => d.DistanceKm <= radiusKm)   // exact radius (bounding-box may over-include corners)
             .OrderBy(d => d.DistanceKm)
             .ThenByDescending(d => d.RatingAvg)
             .Take(limit)

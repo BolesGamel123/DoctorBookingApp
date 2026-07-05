@@ -16,11 +16,12 @@ public sealed class AdminsController : ControllerBase
 
     public AdminsController(ISender mediator) => _mediator = mediator;
 
-    /// <summary>Get all admins.</summary>
+    /// <summary>Get all admins (paginated).</summary>
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var result = await _mediator.Send(new GetAllAdminsQuery());
+        var result = await _mediator.Send(new GetAllAdminsQuery(page, pageSize));
         return Ok(result);
     }
 

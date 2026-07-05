@@ -1,14 +1,11 @@
-﻿using Application.Common.Interfaces;
+using System.IdentityModel.Tokens.Jwt;
+using Application.Common.Interfaces;
 using Application.DTOs;
 using Application.Features;
 using AutoMapper;
 using Domain.Entities;
-using Domain.Entities;
 using Infrastructure.UnitOfWorks;
 using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Infrastructure.Services
 {
@@ -29,7 +26,7 @@ namespace Infrastructure.Services
 
         public async Task<GeneicResult<PaginatedResult<SearcHistoryDTO>>> GetSearchHistoryDTO(int page, int pageSize)
         {
-            var userId = accessor.HttpContext?.User?.FindFirst("id")?.Value;
+            var userId = accessor.HttpContext?.User?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
             if (userId == null)
                 return new GeneicResult<PaginatedResult<SearcHistoryDTO>>
                 {
@@ -91,7 +88,7 @@ namespace Infrastructure.Services
 
         public async Task<GeneicResult<string>> RemoveAllSearchHistory()
         {
-            var userId = accessor.HttpContext?.User?.FindFirst("id")?.Value;
+            var userId = accessor.HttpContext?.User?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
             if (userId == null)
                 return new GeneicResult<string>
                 {

@@ -1,4 +1,4 @@
-﻿using Application.Common.Interfaces;
+using Application.Common.Interfaces;
 using Application.DTOs;
 using Application.Features;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +8,7 @@ namespace DoctorBooking.Controllers
 {
     [Route("api/doctor_favourite")]
     [ApiController]
-    //[Authorize] //. we need the user to be authenticated to make you can to take the id from the token
+    [Authorize] // Required: endpoints read the user ID from the JWT token claims
     public class DoctorFavouriteController : ControllerBase
     {
         private readonly IDoctorFavoriteService service;

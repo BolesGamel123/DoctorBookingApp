@@ -1,4 +1,4 @@
-﻿using Application.Common.Interfaces;
+using Application.Common.Interfaces;
 using Application.DTOs;
 using Application.Features;
 using Microsoft.AspNetCore.Authorization;
@@ -9,7 +9,7 @@ namespace DoctorBooking.Controllers
 {
     [ApiController]
     [Route("api/system_logs")]
-    [Authorize("Admin")]
+    [Authorize(Roles ="Admin")]
     public class SystemLogsController : ControllerBase
     {
         private readonly ISystemLogService service;
@@ -46,11 +46,14 @@ namespace DoctorBooking.Controllers
         }
 
         [HttpGet("get_logs_by_actor_id/{actorId}")]
-        [ProducesResponseType(typeof(GeneicResult<List<SystemLogResponseDTO>>), 200)]
+        [ProducesResponseType(typeof(GeneicResult<PaginatedResult<SystemLogResponseDTO>>), 200)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> GetLogsByActorIdAsync(long actorId)
+        public async Task<IActionResult> GetLogsByActorIdAsync(
+            long actorId,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 20)
         {
-            var result = await service.GetLogsByActorIdAsync(actorId);
+            var result = await service.GetLogsByActorIdAsync(actorId, pageNumber, pageSize);
             if (!result.IsSuccess)
             {
                 return BadRequest(result);

@@ -121,7 +121,7 @@ namespace Infrastructure.Repsoitory
         {
             IQueryable<TEntity> query = dbContext.Set<TEntity>();
 
-            if (includes != null && includes.Length > 1)
+            if (includes != null && includes.Length > 0)
             {
                 foreach (var include in includes)
                 {

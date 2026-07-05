@@ -46,9 +46,9 @@ public sealed class PaymentsController : ControllerBase
     /// </summary>
     [HttpPost("webhook")]
     [AllowAnonymous]
-    public async Task<IActionResult> Webhook()
+    public async Task<IActionResult> Webhook(CancellationToken cancellationToken)
     {
-        var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+        var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync(cancellationToken);
 
         try
         {
@@ -61,12 +61,12 @@ public sealed class PaymentsController : ControllerBase
             if (stripeEvent.Type == EventTypes.PaymentIntentSucceeded)
             {
                 var intent = (PaymentIntent)stripeEvent.Data.Object;
-                await HandlePaymentSucceeded(intent);
+                await HandlePaymentSucceeded(intent, cancellationToken);
             }
             else if (stripeEvent.Type == EventTypes.PaymentIntentPaymentFailed)
             {
                 var intent = (PaymentIntent)stripeEvent.Data.Object;
-                await HandlePaymentFailed(intent);
+                await HandlePaymentFailed(intent, cancellationToken);
             }
 
             return Ok();
@@ -79,19 +79,22 @@ public sealed class PaymentsController : ControllerBase
 
     // ── Private Webhook Helpers ───────────────────────────────────────────
 
-    private async Task HandlePaymentSucceeded(PaymentIntent intent)
+    private async Task HandlePaymentSucceeded(PaymentIntent intent, CancellationToken cancellationToken)
     {
         var payment = await _context.payments
             .Include(p => p.booking)
                 .ThenInclude(b => b.availability_slot)
-            .FirstOrDefaultAsync(p => p.gateway_transaction_id == intent.Id);
+            .FirstOrDefaultAsync(p => p.gateway_transaction_id == intent.Id, cancellationToken);
 
         if (payment is null) return;
 
+        // Idempotency guard — skip if already processed
+        if (payment.status == "paid") return;
+
         // Update payment record
-        payment.status     = "paid";
-        payment.paid_at    = DateTime.UtcNow;
-        payment.updated_at = DateTime.UtcNow;
+        payment.status           = "paid";
+        payment.paid_at          = DateTime.UtcNow;
+        payment.updated_at       = DateTime.UtcNow;
         payment.gateway_response = intent.ToJson();
 
         // Confirm the booking
@@ -109,21 +112,24 @@ public sealed class PaymentsController : ControllerBase
             }
         }
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task HandlePaymentFailed(PaymentIntent intent)
+    private async Task HandlePaymentFailed(PaymentIntent intent, CancellationToken cancellationToken)
     {
         var payment = await _context.payments
             .Include(p => p.booking)
                 .ThenInclude(b => b.availability_slot)
-            .FirstOrDefaultAsync(p => p.gateway_transaction_id == intent.Id);
+            .FirstOrDefaultAsync(p => p.gateway_transaction_id == intent.Id, cancellationToken);
 
         if (payment is null) return;
 
+        // Idempotency guard — skip if already processed
+        if (payment.status == "failed") return;
+
         // Mark payment as failed
-        payment.status          = "failed";
-        payment.updated_at      = DateTime.UtcNow;
+        payment.status           = "failed";
+        payment.updated_at       = DateTime.UtcNow;
         payment.gateway_response = intent.ToJson();
 
         // Revert the booking to cancelled and release the slot
@@ -143,7 +149,7 @@ public sealed class PaymentsController : ControllerBase
             }
         }
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }
 
