@@ -10,10 +10,11 @@ public sealed class AuthResponse
     public string RefreshToken { get; init; } = string.Empty;
     public DateTime ExpiresAt { get; init; }
     public PatientSummary? Patient { get; init; }
+    public string Role { get; init; } = string.Empty;
     public List<string> Errors { get; init; } = [];
 
-    public static AuthResponse Success(string accessToken, string refreshToken, DateTime expiresAt, PatientSummary patient)
-        => new() { Succeeded = true, AccessToken = accessToken, RefreshToken = refreshToken, ExpiresAt = expiresAt, Patient = patient };
+    public static AuthResponse Success(string accessToken, string refreshToken, DateTime expiresAt, PatientSummary patient, string role)
+        => new() { Succeeded = true, AccessToken = accessToken, RefreshToken = refreshToken, ExpiresAt = expiresAt, Patient = patient, Role = role };
 
     public static AuthResponse Failure(params string[] errors)
         => new() { Succeeded = false, Errors = [.. errors] };

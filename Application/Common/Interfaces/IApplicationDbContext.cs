@@ -9,6 +9,7 @@ namespace Application.Common.Interfaces;
 /// </summary>
 public interface IApplicationDbContext
 {
+    DbSet<AuthenticationSession> AuthenticationSessions { get; }
     DbSet<admin> admins { get; }
     DbSet<announcement> announcements { get; }
     DbSet<booking> bookings { get; }

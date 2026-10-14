@@ -8,7 +8,7 @@ namespace DoctorBooking.Controllers
 {
     [ApiController]
     [Route("api/search_history")]
-    [Authorize]
+    [Authorize(Roles = "Patient")]
     public class SearchHistoryController : ControllerBase
     {
         private readonly ISearchHistoryService searchHistoryService;

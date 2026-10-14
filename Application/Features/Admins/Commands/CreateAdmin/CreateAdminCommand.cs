@@ -22,7 +22,9 @@ public sealed class CreateAdminCommandValidator : AbstractValidator<CreateAdminC
         RuleFor(x => x.FullName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(254);
         RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
-        RuleFor(x => x.Role).NotEmpty().MaximumLength(20);
+        RuleFor(x => x.Password).MaximumLength(72)
+            .Must(x => x is null || System.Text.Encoding.UTF8.GetByteCount(x) <= 72);
+        RuleFor(x => x.Role).Equal("admin");
     }
 }
 

@@ -264,6 +264,10 @@ On failure:
 - **Refresh Token** — Long-lived (7 days), stored in DB, used to rotate access tokens
 - **Revocation** — `POST /api/auth/revoke` clears the refresh token (logout)
 
+Authentication sessions are now stored in `authentication_sessions`, keyed by account role and ID. Only a SHA-256 hash of the refresh token is stored. Refresh tokens rotate on every refresh, and the old value cannot be reused. Access tokens carry a session ID (`sid`); bearer validation checks that the session is still active and that the account has not been disabled, banned, deleted, or marked for a required password change. A second login replaces the account's previous session.
+
+Patient, doctor, and admin IDs are role-scoped. Admin login must send `accountType: "Admin"`; public login never guesses an administrator account. Admin endpoints require the `Admin` role. Patient-only endpoints require `Patient`, and chat endpoints require `Patient` or `Doctor`.
+
 ### Password Security
 
 - Passwords hashed with **BCrypt** (cost factor 10)
@@ -278,7 +282,7 @@ On failure:
         "DefaultConnection": "Server=...;Database=CureDB;..."
     },
     "JwtSettings": {
-        "SecretKey": "YourSuperSecretKeyThatIsAtLeast32CharactersLong!",
+    "SecretKey": "set through JwtSettings__SecretKey or a secret manager",
         "Issuer": "DoctorBookingApp",
         "Audience": "DoctorBookingApp",
         "AccessTokenExpirationMinutes": 60,
@@ -286,6 +290,10 @@ On failure:
     }
 }
 ```
+
+Do not commit signing keys or Stripe private keys. `JwtSettings:SecretKey` is validated at startup and must contain at least 32 UTF-8 bytes. Set it with `JwtSettings__SecretKey` in the deployment environment or a secret manager. Set `Stripe__SecretKey` and `Stripe__WebhookSecret` the same way. The checked-in `appsettings.json` intentionally leaves private values empty; rotate any keys that were previously committed.
+
+The API applies a fixed-window limit of 10 authentication requests per minute per source IP. Password input is limited to 72 UTF-8 bytes to match BCrypt's input limit. Accounts with `two_factor_enabled` remain unavailable until a second-factor flow is added.
 
 ---
 

@@ -5,11 +5,13 @@ using Application.Features.Admins.Queries.GetAdminById;
 using Application.Features.Admins.Queries.GetAllAdmins;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DoctorBooking.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize(Roles = "Admin")]
 public sealed class AdminsController : ControllerBase
 {
     private readonly ISender _mediator;

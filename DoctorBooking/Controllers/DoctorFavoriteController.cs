@@ -8,7 +8,7 @@ namespace DoctorBooking.Controllers
 {
     [Route("api/doctor_favourite")]
     [ApiController]
-    [Authorize] // Required: endpoints read the user ID from the JWT token claims
+    [Authorize(Roles = "Patient")]
     public class DoctorFavouriteController : ControllerBase
     {
         private readonly IDoctorFavoriteService service;

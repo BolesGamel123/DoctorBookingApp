@@ -16,13 +16,14 @@ public sealed class TokenService : ITokenService
     public TokenService(IOptions<JwtSettingsOption> settings)
         => _settings = settings.Value;
 
-    public string GenerateAccessToken(long userId, string email, string fullName, IList<string> roles)
+    public string GenerateAccessToken(long userId, string email, string fullName, IList<string> roles, Guid sessionId)
     {
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new(JwtRegisteredClaimNames.Email, email),
             new(JwtRegisteredClaimNames.Name, fullName),
+            new(JwtRegisteredClaimNames.Sid, sessionId.ToString()),
             new(ClaimTypes.NameIdentifier, userId.ToString())
         };
 
@@ -45,4 +46,7 @@ public sealed class TokenService : ITokenService
         var bytes = RandomNumberGenerator.GetBytes(64);
         return Convert.ToBase64String(bytes);
     }
+
+    public string HashRefreshToken(string refreshToken)
+        => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
 }

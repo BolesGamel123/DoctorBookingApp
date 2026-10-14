@@ -31,10 +31,20 @@ public partial class AppDbContext : DbContext, IApplicationDbContext
     public virtual DbSet<specialty> specialties { get; set; }
     public virtual DbSet<system_log> system_logs { get; set; }
     public virtual DbSet<patient> patients { get; set; }
+    public DbSet<AuthenticationSession> AuthenticationSessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<AuthenticationSession>(entity =>
+        {
+            entity.ToTable("authentication_sessions");
+            entity.HasKey(x => new { x.Role, x.UserId });
+            entity.Property(x => x.Role).HasMaxLength(16);
+            entity.Property(x => x.RefreshTokenHash).HasMaxLength(64).IsConcurrencyToken();
+            entity.HasIndex(x => x.RefreshTokenHash).IsUnique().HasFilter("[RevokedAt] IS NULL");
+        });
 
         modelBuilder.Entity<chat_conversation>()
             .HasOne(x => x.last_message)

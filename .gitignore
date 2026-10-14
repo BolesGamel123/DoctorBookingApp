@@ -68,3 +68,6 @@ package-lock.json
 # Rider
 .idea/
 
+# Local SDK and tooling state
+.dotnet/
+

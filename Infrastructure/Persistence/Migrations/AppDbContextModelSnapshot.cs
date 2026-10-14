@@ -22,6 +22,39 @@ namespace Infrastructure.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Domain.Entities.AuthenticationSession", b =>
+                {
+                    b.Property<string>("Role")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RefreshTokenHash")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("SessionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Role", "UserId");
+
+                    b.HasIndex("RefreshTokenHash")
+                        .IsUnique()
+                        .HasFilter("[RevokedAt] IS NULL");
+
+                    b.ToTable("authentication_sessions", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.admin", b =>
                 {
                     b.Property<long>("id")
@@ -1489,6 +1522,7 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasOne("Domain.Entities.chat_message", "reply_to_message")
                         .WithMany("Inversereply_to_message")
                         .HasForeignKey("reply_to_message_id")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("FK_cm_reply_to");
 
                     b.Navigation("conversation");

@@ -9,7 +9,7 @@ namespace DoctorBooking.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Patient")]
 public sealed class BookingsController : ControllerBase
 {
     private readonly ISender _mediator;

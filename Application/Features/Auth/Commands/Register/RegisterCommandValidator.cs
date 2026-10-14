@@ -23,6 +23,10 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
             .NotEmpty().WithMessage("Password is required.")
             .MinimumLength(8).WithMessage("Password must be at least 8 characters.");
 
+        RuleFor(x => x.Password).MaximumLength(72)
+            .Must(x => x is null || System.Text.Encoding.UTF8.GetByteCount(x) <= 72)
+            .WithMessage("Password must not exceed 72 UTF-8 bytes.");
+
         RuleFor(x => x.ConfirmPassword)
             .Equal(x => x.Password).WithMessage("Passwords do not match.");
     }

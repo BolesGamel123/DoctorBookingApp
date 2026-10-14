@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace DoctorBooking.Hubs;
 
-[Authorize]
+[Authorize(Roles = "Patient,Doctor")]
 public sealed class ChatHub : Hub
 {
     private readonly ISender _mediator;

@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace DoctorBooking.Controllers;
 
 [ApiController]
-[Authorize] // This attribute ensures that all endpoints in this controller require authentication (JWT Token). Only authenticated users can access these endpoints.
+[Authorize(Roles = "Patient,Doctor")]
 [Route("api/[controller]")]
 public sealed class ChatController : ControllerBase
 {

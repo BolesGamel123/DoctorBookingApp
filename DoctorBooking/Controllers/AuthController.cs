@@ -9,11 +9,13 @@ using Application.Features.Auth.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace DoctorBooking.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[EnableRateLimiting("auth")]
 public sealed class AuthController : ControllerBase
 {
     private readonly ISender _mediator;
@@ -21,6 +23,7 @@ public sealed class AuthController : ControllerBase
     public AuthController(ISender mediator) => _mediator = mediator;
 
     /// <summary>Register a new patient account.</summary>
+    [AllowAnonymous]
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterCommand command)
     {
@@ -29,6 +32,7 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>Login with email and password.</summary>
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginCommand command)
     {
@@ -37,6 +41,7 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>Refresh access token using a valid refresh token.</summary>
+    [AllowAnonymous]
     [HttpPost("refresh")]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenCommand command)
     {
@@ -49,8 +54,11 @@ public sealed class AuthController : ControllerBase
     [HttpPost("revoke")]
     public async Task<IActionResult> Revoke()
     {
-        var userId = long.Parse(User.FindFirstValue(JwtRegisteredClaimNames.Sub)!);
-        var result = await _mediator.Send(new RevokeTokenCommand(userId));
-        return result.Success ? Ok(result) : NotFound(result);
+        if (!long.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sub), out var userId)
+            || !Guid.TryParse(User.FindFirstValue(JwtRegisteredClaimNames.Sid), out var sessionId))
+            return Unauthorized();
+        var role = User.FindFirstValue(ClaimTypes.Role)!;
+        var result = await _mediator.Send(new RevokeTokenCommand(userId, role, sessionId));
+        return result.Success ? Ok(result) : Conflict(result);
     }
 }

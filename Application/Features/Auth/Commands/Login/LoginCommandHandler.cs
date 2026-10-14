@@ -1,140 +1,48 @@
 using Application.Common.Interfaces;
 using Application.Common.Models;
-using Application.Features.Auth.Commands.Register;
 using Application.Features.Auth.DTOs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace Application.Features.Auth.Commands.Login;
 
-public sealed class LoginCommandHandler
+public sealed class LoginCommandHandler(
+    IApplicationDbContext context, IPasswordHasher passwordHasher, IAuthenticationSessionService sessions)
     : IRequestHandler<LoginCommand, ApiResponse<AuthResponse>>
 {
-    private readonly IApplicationDbContext _context;
-    private readonly ITokenService _tokenService;
-    private readonly IPasswordHasher _passwordHasher;
-    private readonly JwtSettingsOption _jwtSettings;
-
-    public LoginCommandHandler(
-        IApplicationDbContext context,
-        ITokenService tokenService,
-        IPasswordHasher passwordHasher,
-        IOptions<JwtSettingsOption> jwtSettings)
+    public async Task<ApiResponse<AuthResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
-        _context = context;
-        _tokenService = tokenService;
-        _passwordHasher = passwordHasher;
-        _jwtSettings = jwtSettings.Value;
-    }
-
-    public async Task<ApiResponse<AuthResponse>> Handle(
-    LoginCommand request,
-    CancellationToken cancellationToken)
-    {
-        var patient = await _context.patients
-            .FirstOrDefaultAsync(u =>
-                u.email == request.Email &&
-                u.deleted_at == null,
-                cancellationToken);
-
-        if (patient is not null)
+        var candidates = new List<AuthAccount>();
+        if (request.AccountType is null or AccountRoles.Patient)
         {
-            if (!_passwordHasher.Verify(request.Password, patient.password))
-                return ApiResponse<AuthResponse>.Fail("Login failed.", ["Invalid email or password."]);
-
-            if (patient.is_banned)
-                return ApiResponse<AuthResponse>.Fail("Login failed.",
-                    ["Your account has been suspended.", patient.ban_reason ?? "Contact support."]);
-
-            if (!patient.is_active)
-                return ApiResponse<AuthResponse>.Fail("Login failed.", ["Your account is not active."]);
-
-            var roles = new List<string> { "Patient" };
-
-            var accessToken = _tokenService.GenerateAccessToken(
-                patient.id,
-                patient.email,
-                patient.full_name,
-                roles);
-
-            var refreshToken = _tokenService.GenerateRefreshToken();
-
-            patient.refresh_token = refreshToken;
-            patient.refresh_token_expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
-            patient.updated_at = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync(cancellationToken);
-
-            var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
-
-            var summary = new PatientSummary
-            {
-                Id = patient.id,
-                FullName = patient.full_name,
-                Email = patient.email,
-                MobileNumber = patient.mobile_number,
-                ProfilePhotoUrl = patient.profile_photo_url,
-                Birthdate = patient.birthdate,
-                IsActive = patient.is_active,
-                CreatedAt = patient.created_at
-            };
-
-            return ApiResponse<AuthResponse>.Ok(
-                AuthResponse.Success(accessToken, refreshToken, expiresAt, summary),
-                "Login successful.");
+            var patient = await context.patients.SingleOrDefaultAsync(
+                x => x.email == request.Email && x.deleted_at == null, cancellationToken);
+            if (patient is not null) candidates.Add(AuthAccount.From(patient));
         }
-
-        var doctor = await _context.doctors
-            .FirstOrDefaultAsync(u =>
-                u.email == request.Email &&
-                u.deleted_at == null,
-                cancellationToken);
-
-        if (doctor is not null)
+        if (request.AccountType is null or AccountRoles.Doctor)
         {
-            if (!_passwordHasher.Verify(request.Password, doctor.password))
-                return ApiResponse<AuthResponse>.Fail("Login failed.", ["Invalid email or password."]);
-
-            if (doctor.is_banned)
-                return ApiResponse<AuthResponse>.Fail("Login failed.", ["Your account has been suspended."]);
-
-            if (!doctor.is_active)
-                return ApiResponse<AuthResponse>.Fail("Login failed.", ["Your account is not active."]);
-
-            var roles = new List<string> { "Doctor" };
-
-            var accessToken = _tokenService.GenerateAccessToken(
-                doctor.id,
-                doctor.email,
-                doctor.full_name,
-                roles);
-
-            var refreshToken = _tokenService.GenerateRefreshToken();
-
-            doctor.updated_at = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync(cancellationToken);
-
-            var expiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes);
-
-            var summary = new PatientSummary
-            {
-                Id = doctor.id,
-                FullName = doctor.full_name,
-                Email = doctor.email,
-                MobileNumber = doctor.mobile_number,
-                ProfilePhotoUrl = doctor.profile_photo_url,
-                Birthdate = null,
-                IsActive = doctor.is_active,
-                CreatedAt = doctor.created_at
-            };
-
-            return ApiResponse<AuthResponse>.Ok(
-                AuthResponse.Success(accessToken, refreshToken, expiresAt, summary),
-                "Login successful.");
+            var doctor = await context.doctors.SingleOrDefaultAsync(
+                x => x.email == request.Email && x.deleted_at == null, cancellationToken);
+            if (doctor is not null) candidates.Add(AuthAccount.From(doctor));
         }
+        // Public login never falls back to privileged accounts.
+        if (request.AccountType == AccountRoles.Admin)
+        {
+            var admin = await context.admins.SingleOrDefaultAsync(x => x.email == request.Email, cancellationToken);
+            if (admin is not null) candidates.Add(AuthAccount.From(admin));
+        }
+        if (candidates.Count != 1 || !candidates[0].CanAuthenticate
+            || !passwordHasher.Verify(request.Password, candidates[0].PasswordHash))
+            return ApiResponse<AuthResponse>.Fail("Login failed.", ["Invalid credentials or account unavailable."]);
 
-        return ApiResponse<AuthResponse>.Fail("Login failed.", ["Invalid email or password."]);
+        try
+        {
+            var response = await sessions.IssueAsync(candidates[0], cancellationToken);
+            return ApiResponse<AuthResponse>.Ok(response, "Login successful.");
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return ApiResponse<AuthResponse>.Fail("Login failed.", ["Session changed; please retry login."]);
+        }
     }
 }

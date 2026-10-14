@@ -22,6 +22,7 @@ public sealed class PatientsController : ControllerBase
 
     /// <summary>Get current authenticated patient's profile.</summary>
     [HttpGet("me")]
+    [Authorize(Roles = "Patient")]
     public async Task<IActionResult> GetMe()
     {
         var userId = GetCurrentUserId();
@@ -31,6 +32,7 @@ public sealed class PatientsController : ControllerBase
 
     /// <summary>Update current authenticated patient's profile.</summary>
     [HttpPut("me")]
+    [Authorize(Roles = "Patient")]
     public async Task<IActionResult> UpdateMe([FromBody] UpdatePatientRequest request)
     {
         var userId = GetCurrentUserId();

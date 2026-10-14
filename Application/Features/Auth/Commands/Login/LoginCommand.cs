@@ -6,5 +6,6 @@ namespace Application.Features.Auth.Commands.Login;
 
 public sealed record LoginCommand(
     string Email,
-    string Password
+    string Password,
+    string? AccountType = null
 ) : IRequest<ApiResponse<AuthResponse>>;

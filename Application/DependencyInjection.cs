@@ -2,6 +2,8 @@ using Application.Common.Behaviors;
 using Application.Common.Models;
 using FluentValidation;
 using MediatR;
+using Application.Common.Interfaces;
+using Application.Features.Auth;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Application;
@@ -15,6 +17,7 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         var assembly = typeof(DependencyInjection).Assembly;
+        services.AddScoped<IAuthenticationSessionService, AuthenticationSessionService>();
 
         // MediatR — auto-discovers all IRequestHandler implementations
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));

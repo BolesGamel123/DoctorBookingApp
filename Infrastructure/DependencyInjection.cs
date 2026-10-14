@@ -12,6 +12,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Http;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Application.Features.Auth;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Infrastructure;
 
@@ -36,8 +40,16 @@ public static class DependencyInjection
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
 
         // ── JWT Settings ─────────────────────────────────────
-        services.Configure<JwtSettingsOption>(
-            configuration.GetSection(JwtSettingsOption.SectionName));
+        services.AddOptions<JwtSettingsOption>()
+            .Bind(configuration.GetSection(JwtSettingsOption.SectionName))
+            .Validate(x => !string.IsNullOrWhiteSpace(x.SecretKey)
+                && Encoding.UTF8.GetByteCount(x.SecretKey) >= 32,
+                "Set JwtSettings:SecretKey using a secret store or environment variable (at least 32 UTF-8 bytes).")
+            .Validate(x => !string.IsNullOrWhiteSpace(x.Issuer) && !string.IsNullOrWhiteSpace(x.Audience),
+                "JWT issuer and audience are required.")
+            .Validate(x => x.AccessTokenExpirationMinutes is > 0 and <= 60
+                && x.RefreshTokenExpirationDays is > 0 and <= 30, "JWT lifetimes are outside supported bounds.")
+            .ValidateOnStart();
 
         var jwtSettings = configuration
             .GetSection(JwtSettingsOption.SectionName)
@@ -53,6 +65,8 @@ public static class DependencyInjection
                     ValidateAudience         = true,
                     ValidateLifetime         = true,
                     ValidateIssuerSigningKey = true,
+                    ValidAlgorithms          = [SecurityAlgorithms.HmacSha256],
+                    ClockSkew                = TimeSpan.FromSeconds(30),
                     ValidIssuer              = jwtSettings.Issuer,
                     ValidAudience            = jwtSettings.Audience,
                     IssuerSigningKey         = new SymmetricSecurityKey(
@@ -60,6 +74,23 @@ public static class DependencyInjection
                 };
                 options.Events = new JwtBearerEvents
                 {
+                    OnTokenValidated = async context =>
+                    {
+                        var principal = context.Principal!;
+                        var roles = principal.FindAll(ClaimTypes.Role).Select(x => x.Value).ToArray();
+                        if (roles.Length != 1 || !AccountRoles.IsValid(roles[0])
+                            || !long.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub), out var userId)
+                            || !Guid.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sid), out var sessionId))
+                        {
+                            context.Fail("Invalid identity claims.");
+                            return;
+                        }
+                        var sessions = context.HttpContext.RequestServices
+                            .GetRequiredService<IAuthenticationSessionService>();
+                        if (!await sessions.IsValidAsync(roles[0], userId, sessionId,
+                                context.HttpContext.RequestAborted))
+                            context.Fail("Session is unavailable.");
+                    },
                     OnMessageReceived = context =>
                     {
                         var accessToken = context.Request.Query["access_token"];
@@ -76,7 +107,8 @@ public static class DependencyInjection
                 };
             });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+            options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
         // ── Services ─────────────────────────────────────────
         services.AddScoped<ITokenService, TokenService>();

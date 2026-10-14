@@ -33,7 +33,7 @@ public sealed class PaymentsController : ControllerBase
     /// Returns the client secret to complete payment on the frontend.
     /// </summary>
     [HttpPost("create-intent")]
-    [Authorize]
+    [Authorize(Roles = "Patient")]
     public async Task<IActionResult> CreateIntent([FromBody] CreateIntentRequest request)
     {
         var result = await _mediator.Send(new CreatePaymentIntentCommand(request.BookingId));

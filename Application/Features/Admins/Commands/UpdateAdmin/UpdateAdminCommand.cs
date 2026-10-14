@@ -21,7 +21,7 @@ public sealed class UpdateAdminCommandValidator : AbstractValidator<UpdateAdminC
         RuleFor(x => x.Id).GreaterThan(0);
         RuleFor(x => x.FullName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Email).NotEmpty().EmailAddress().MaximumLength(254);
-        RuleFor(x => x.Role).NotEmpty().MaximumLength(20);
+        RuleFor(x => x.Role).Equal("admin");
     }
 }
 
